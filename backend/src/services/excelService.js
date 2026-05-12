@@ -18,12 +18,19 @@ class ExcelService {
       { header: 'Fecha Nacimiento', key: 'fecha_nacimiento', width: 18 },
       { header: 'Profesión', key: 'nombre_profesion', width: 25 },
       { header: 'Teléfono', key: 'telefono', width: 15 },
+      { header: 'Cargo Actual', key: 'cargo_actual', width: 25 },
+      { header: 'Ítem', key: 'identificador_laboral', width: 15 },
+      { header: 'Fuente Financiamiento', key: 'nombre_fuente', width: 20 },
+      { header: 'Tipo Personal', key: 'tipo_personal', width: 20 },
+      { header: 'Unidad / Servicio', key: 'unidad_servicio', width: 25 },
+      { header: 'Fecha Ingreso', key: 'fecha_ingreso', width: 18 },
     ];
 
     data.forEach(item => {
       worksheet.addRow({
         ...item,
-        fecha_nacimiento: item.fecha_nacimiento ? new Date(item.fecha_nacimiento).toLocaleDateString('es-BO') : ''
+        fecha_nacimiento: item.fecha_nacimiento ? new Date(item.fecha_nacimiento).toLocaleDateString('es-BO') : '',
+        fecha_ingreso: item.fecha_ingreso ? new Date(item.fecha_ingreso).toLocaleDateString('es-BO') : ''
       });
     });
 

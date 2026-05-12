@@ -62,6 +62,12 @@ CREATE TABLE vinculos_laborales (
     observaciones TEXT
 );
 
+INSERT INTO cat_fuentes_financiamiento (nombre_fuente) VALUES 
+('TGN'), ('HIPC'), ('MINISTERIO'), ('MUNICIPIO');
+
+INSERT INTO cat_tipos_personal (nombre_tipo) VALUES 
+('ÍTEM'), ('CONTRATO'), ('CONSULTORÍA');
+
 -- Datos iniciales sugeridos
 INSERT INTO cat_expediciones (sigla, nombre) VALUES 
 ('LP', 'La Paz'), ('OR', 'Oruro'), ('CB', 'Cochabamba'), 

@@ -7,12 +7,17 @@ const db = require('../config/db');
 
 const getAllPersonal = async (req, res) => {
   try {
-    const { nombre, ci, page = 1, limit = 50 } = req.query;
+    const { nombre, ci, item, fuentes, page = 1, limit = 50 } = req.query;
     const offset = (page - 1) * limit;
     
+    // fuentes puede venir como string separado por comas si se envía desde query params
+    const fuentesArray = fuentes ? (Array.isArray(fuentes) ? fuentes : fuentes.split(',')) : [];
+
     const personal = await PersonalModel.getAll({ 
       nombre, 
       ci, 
+      item,
+      fuentes: fuentesArray,
       limit: parseInt(limit), 
       offset: parseInt(offset) 
     });
@@ -78,7 +83,25 @@ const getCatalogos = async (req, res) => {
   try {
     const { rows: expediciones } = await db.query('SELECT * FROM cat_expediciones ORDER BY sigla');
     const { rows: profesiones } = await db.query('SELECT * FROM cat_profesiones ORDER BY nombre_profesion');
-    res.json({ expediciones, profesiones });
+    const { rows: fuentes } = await db.query('SELECT * FROM cat_fuentes_financiamiento ORDER BY nombre_fuente');
+    const { rows: tipos } = await db.query('SELECT * FROM cat_tipos_personal ORDER BY nombre_tipo');
+    const { rows: establecimientos } = await db.query('SELECT * FROM establecimientos ORDER BY nombre_establecimiento');
+    
+    res.json({ expediciones, profesiones, fuentes, tipos, establecimientos });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getHistorial = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await db.query(`
+      SELECT * FROM historial_movimientos 
+      WHERE personal_id = $1 
+      ORDER BY fecha_movimiento DESC, id DESC
+    `, [id]);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -91,5 +114,6 @@ module.exports = {
   exportPersonal,
   importPersonal,
   getCatalogos,
+  getHistorial,
   upload
 };

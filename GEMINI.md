@@ -1,27 +1,27 @@
 # Proyecto: Sistema RRHH - Hospital Barrios Mineros (Oruro, Bolivia)
 
-## Estado del Proyecto - 10 de Mayo, 2026
+## Estado del Proyecto - 11 de Mayo, 2026
 
 ### 1. Arquitectura Implementada
 - **Backend:** Node.js + Express (Arquitectura por capas: Modelos, Controladores, Rutas, Servicios).
 - **Frontend:** React + Vite + Tailwind CSS v4.
 - **Base de Datos:** PostgreSQL (Normalizada con tablas de catálogo).
 
-### 2. Módulos Completados (Gestión de Personal)
+### 2. Módulos Completados (Gestión de Personal y Vínculos)
 - **Base de Datos:**
-  - Tablas: `personal`, `establecimientos`, `vinculos_laborales`, y catálogos (`expediciones`, `profesiones`, `tipos_personal`, `fuentes`).
-  - Script de inicialización y seed de datos de prueba completado.
+  - Tablas: `personal`, `vinculos_laborales`, `historial_movimientos`, `establecimientos` y catálogos completos.
+  - Tabla `historial_movimientos` con soporte JSONB para trazabilidad de cambios.
+  - Script de inicialización actualizado con fuentes (TGN, HIPC, MINISTERIO, MUNICIPIO).
 - **Backend API:**
-  - CRUD completo para la tabla `personal`.
-  - Filtros dinámicos por CI y Nombre/Apellido.
-  - Sanitización de datos (conversión de strings vacíos a NULL).
-  - Servicio de Exportación a Excel (`exceljs`) con todos los campos y estilos.
-  - Servicio de Importación de Excel (`xlsx`) con mapeo automático de catálogos y parseo de fechas.
-  - Tests de integración con `Jest` y `Supertest` (4 tests pasando).
+  - CRUD transaccional unificado para Personal y Vínculos Laborales.
+  - Búsqueda Global Avanzada: Soporte multi-palabra para nombres/apellidos y filtro por Ítem.
+  - Filtros dinámicos por múltiples fuentes de financiamiento.
+  - Servicio de Exportación a Excel actualizado con 18 columnas (incluyendo datos laborales).
+  - Endpoint de Historial de Movimientos por empleado.
 - **Frontend UI:**
-  - Layout con Sidebar y navegación funcional (Lucide React).
-  - Grid de personal con visualización detallada (CI con complemento, nombres completos, fechas formateadas).
-  - Formulario modal para Registro/Edición con validación y selección de catálogos.
+    - Formulario unificado de Personal y Vínculo Laboral con secciones estructuradas.
+    - Grilla de personal con vista detallada de Cargo, Ítem y etiquetas de Fuente.
+    - **Módulo de Trayectoria Laboral**: Visualización de movimientos en línea de tiempo con comparativa de cambios.
 
 ### 3. Credenciales de Base de Datos
 - **DB Name:** `rrhh_barrios_mineros`
@@ -30,11 +30,11 @@
 - **Host:** `localhost`
 - **Port:** `5432`
 
-### 4. Pendientes para Mañana
-- [ ] Implementar el módulo de **Vínculos Laborales** (Asignar personal a establecimientos, cargos, tipos de contrato y unidades).
-- [ ] Diseñar la lógica de **Asistencias y Turnos**.
+### 4. Pendientes
+- [ ] Implementar el módulo de **Asistencias y Turnos**.
 - [ ] Desarrollar la gestión de **Vacaciones y Permisos**.
 - [ ] Implementar **Certificaciones y Memorándums**.
+- [ ] Actualizar el servicio de **Importación de Excel** para soportar los nuevos campos de vínculos laborales.
 
 ### 5. Cómo ejecutar el proyecto
 - **Backend:** `cd backend && npm run dev` (Puerto 3001)
