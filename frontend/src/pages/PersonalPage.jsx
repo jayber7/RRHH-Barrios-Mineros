@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard } from 'lucide-react';
+import { Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import PersonalForm from '../components/PersonalForm';
 
 const PersonalPage = () => {
   const [personal, setPersonal] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [catalogos, setCatalogos] = useState({ expediciones: [], profesiones: [] });
   const [filters, setFilters] = useState({ nombre: '', ci: '' });
   const [loading, setLoading] = useState(false);
@@ -13,15 +14,18 @@ const PersonalPage = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchPersonal();
+    fetchPersonal(1);
     fetchCatalogos();
   }, [filters]);
 
-  const fetchPersonal = async () => {
+  const fetchPersonal = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3001/api/personal', { params: filters });
-      setPersonal(response.data);
+      const response = await axios.get('http://localhost:3001/api/personal', { 
+        params: { ...filters, page, limit: 50 } 
+      });
+      setPersonal(response.data.data);
+      setPagination(response.data.pagination);
     } catch (error) {
       console.error('Error fetching personal:', error);
     } finally {
@@ -155,17 +159,17 @@ const PersonalPage = () => {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="overflow-auto max-h-[calc(100vh-280px)]">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
               <tr>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm">CI / Doc.</th>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Apellidos y Nombres</th>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm">F. Nacimiento</th>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Profesión</th>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm">Contacto</th>
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm text-right">Acciones</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50">CI / Doc.</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50">Apellidos y Nombres</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50">F. Nacimiento</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50">Profesión</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50">Contacto</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-sm text-right bg-slate-50">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -225,6 +229,34 @@ const PersonalPage = () => {
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      {!loading && personal.length > 0 && (
+        <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-200">
+          <div className="text-sm text-slate-500">
+            Mostrando <span className="font-medium">{personal.length}</span> de <span className="font-medium">{pagination.total}</span> registros
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fetchPersonal(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex items-center px-4 text-sm font-medium text-slate-700">
+              Página {pagination.page} de {pagination.totalPages}
+            </div>
+            <button
+              onClick={() => fetchPersonal(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <PersonalForm 

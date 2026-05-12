@@ -3,7 +3,7 @@ const db = require('../config/db');
 class PersonalModel {
   static async getAll(filters = {}) {
     let query = `
-      SELECT p.*, e.sigla as expedicion, prof.nombre_profesion
+      SELECT p.*, e.sigla as expedicion, prof.nombre_profesion, COUNT(*) OVER() as total_count
       FROM personal p
       LEFT JOIN cat_expediciones e ON p.exp_id = e.id
       LEFT JOIN cat_profesiones prof ON p.profesion_id = prof.id
@@ -18,10 +18,18 @@ class PersonalModel {
 
     if (filters.nombre) {
       params.push(`%${filters.nombre}%`);
-      query += ` AND (p.primer_nombre ILIKE $${params.length} OR p.apellido_paterno ILIKE $${params.length})`;
+      query += ` AND (p.primer_nombre ILIKE $${params.length} OR p.apellido_paterno ILIKE $${params.length} OR p.apellido_materno ILIKE $${params.length})`;
     }
 
-    query += ' ORDER BY p.apellido_paterno ASC';
+    query += ' ORDER BY p.id DESC';
+
+    if (filters.limit && filters.offset !== undefined) {
+      params.push(filters.limit);
+      query += ` LIMIT $${params.length}`;
+      params.push(filters.offset);
+      query += ` OFFSET $${params.length}`;
+    }
+
     const { rows } = await db.query(query, params);
     return rows;
   }

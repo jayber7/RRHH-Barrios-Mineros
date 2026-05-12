@@ -7,9 +7,27 @@ const db = require('../config/db');
 
 const getAllPersonal = async (req, res) => {
   try {
-    const filters = req.query;
-    const personal = await PersonalModel.getAll(filters);
-    res.json(personal);
+    const { nombre, ci, page = 1, limit = 50 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const personal = await PersonalModel.getAll({ 
+      nombre, 
+      ci, 
+      limit: parseInt(limit), 
+      offset: parseInt(offset) 
+    });
+
+    const totalCount = personal.length > 0 ? parseInt(personal[0].total_count) : 0;
+    
+    res.json({
+      data: personal,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

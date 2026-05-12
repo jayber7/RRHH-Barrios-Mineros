@@ -9,9 +9,9 @@ const Placeholder = ({ title }) => <div className="p-6"><h1>{title} - Próximame
 function App() {
   return (
     <Router>
-      <div className="flex bg-slate-50 min-h-screen">
+      <div className="flex bg-slate-50 h-screen overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-y-auto h-full">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/personal" element={<PersonalPage />} />

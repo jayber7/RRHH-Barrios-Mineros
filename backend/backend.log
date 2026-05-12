@@ -1,0 +1,23 @@
+
+> backend@1.0.0 start
+> node src/index.js
+
+◇ injected env (6) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+Servidor corriendo en puerto 3001
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
+Base de datos conectada con éxito
