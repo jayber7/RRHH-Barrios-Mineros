@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, Trash2, Edit3, ChevronRight, 
   FileSpreadsheet, User, Clock as ClockIcon, Calendar as CalendarIcon,
-  ChevronDown, ChevronUp, MoreVertical, Plus
+  ChevronDown, ChevronUp, MoreVertical, Plus, AlertCircle
 } from 'lucide-react';
 import AsistenciaImport from '../components/AsistenciaImport';
 

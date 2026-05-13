@@ -1,24 +1,18 @@
-# Proyecto: Sistema RRHH - Hospital Barrios Mineros (Oruro, Bolivia)
+# Progreso del Proyecto - Asistencia
 
-## Estado del Proyecto - 12 de Mayo, 2026 (Final de Sesión)
+## 13 de Mayo 2026
+- **Problema detectado:** El botón de importación de asistencia en el frontend no terminaba el proceso (se quedaba colgado) y la página de asistencias se mostraba en blanco.
+- **Causas:**
+    1. El controlador `asistenciaController.js` tenía el método `importAsistencia` vacío.
+    2. El componente `AsistenciasPage.jsx` intentaba usar el icono `AlertCircle` sin haberlo importado de `lucide-react`, causando un error de ejecución en React.
+- **Acciones realizadas:**
+    - Implementación completa de `AsistenciaController.importAsistencia` en el backend.
+    - Mejora en `AsistenciaService.importAsistenciaFromExcel` para manejar re-importaciones limpiando registros previos.
+    - Corrección del error de importación de `AlertCircle` en `frontend/src/pages/AsistenciasPage.jsx`.
+    - Verificación mediante `npm run build` en el frontend (exitoso).
+- **Estado actual:** La importación funciona y la grilla de asistencias ya no causa pantalla en blanco.
 
-### 1. Arquitectura y Esquema
-- **Base de Datos:** Ampliada en `vinculos_laborales` con campos técnicos: `cargo_planilla`, `cargo_escala`, `nro_resumen_ejecutivo`.
-- **Backend:** `PersonalModel` y `ImportService` actualizados para soportar la gestión integral de datos de inventario.
-
-### 2. Módulos Completados
-- **Gestión de Personal Avanzada:**
-  - Nueva "Ficha Técnica" en el frontend que permite editar todos los campos de identidad y laborales en una sola interfaz rápida.
-- **Módulo de Importación Pro:**
-  - Importación multi-hoja con detección dinámica de cabeceras.
-  - Creación dinámica de catálogos (Profesiones).
-  - Modal de reporte de errores detallado (CI, Hoja, Causa).
-
-### 3. Pendientes Prioritarios
-- [ ] Implementar el módulo de **Asistencias y Turnos** (Siguiente paso principal).
-- [ ] Desarrollar la gestión de **Vacaciones y Permisos**.
-- [ ] Mejorar la visualización de cargos técnicos en la tabla principal.
-
-### 4. Cómo ejecutar el proyecto
-- **Backend:** `cd backend && npm run dev`
-- **Frontend:** `cd frontend && npm run dev`
+## Tareas para mañana
+- Verificar en el frontend que el modal de resultados se muestre correctamente al finalizar la importación.
+- Probar la detección automática de hojas (Ministeriales vs Residentes).
+- Validar que los filtros de Mes/Año en la grilla funcionen como se espera.

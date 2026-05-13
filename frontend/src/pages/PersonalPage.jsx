@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard, ChevronLeft, ChevronRight, History } from 'lucide-react';
+import { 
+  Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard, 
+  ChevronLeft, ChevronRight, History, AlertCircle 
+} from 'lucide-react';
 import PersonalForm from '../components/PersonalForm';
 import HistorialModal from '../components/HistorialModal';
 import ImportResultsModal from '../components/ImportResultsModal';

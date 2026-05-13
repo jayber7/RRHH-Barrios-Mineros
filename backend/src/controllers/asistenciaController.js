@@ -3,7 +3,27 @@ const db = require('../config/db');
 
 class AsistenciaController {
   static async importAsistencia(req, res) {
-    // ... (código existente)
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No se subió ningún archivo' });
+      }
+
+      const { mes, anio } = req.body;
+      if (!mes || !anio) {
+        return res.status(400).json({ error: 'Mes y año son requeridos' });
+      }
+
+      const results = await AsistenciaService.importAsistenciaFromExcel(
+        req.file.buffer,
+        parseInt(mes),
+        parseInt(anio)
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error('Error en importAsistencia:', error);
+      res.status(500).json({ error: error.message || 'Error al procesar el archivo' });
+    }
   }
 
   static async getAsistencias(req, res) {

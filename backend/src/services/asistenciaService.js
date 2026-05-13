@@ -72,6 +72,9 @@ class AsistenciaService {
 
           const asistenciaId = asistencia[0].id;
 
+          // 3.5 Limpiar registros diarios previos para evitar duplicados en re-importaciones
+          await db.query('DELETE FROM asistencia_diaria WHERE asistencia_id = $1', [asistenciaId]);
+
           // 4. Procesar Días (1 al 31)
           // Buscamos columnas que sean puramente números del 1 al 31
           for (let dia = 1; dia <= 31; dia++) {
