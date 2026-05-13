@@ -3,9 +3,23 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import PersonalPage from './pages/PersonalPage';
 import AsistenciasPage from './pages/AsistenciasPage';
+import Dashboard from './pages/Dashboard';
 
-const Dashboard = () => <div className="p-6"><h1>Dashboard - Hospital Barrios Mineros</h1></div>;
-const Placeholder = ({ title }) => <div className="p-6"><h1>{title} - Próximamente</h1></div>;
+const Placeholder = ({ title }) => (
+  <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="mb-8">
+      <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{title}</h1>
+      <p className="text-slate-500 mt-1">Este módulo se encuentra en desarrollo</p>
+    </div>
+    <div className="bg-white p-12 rounded-3xl border border-slate-100 shadow-sm text-center">
+      <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20v-6M9 20V10M6 20V4M15 20V8M18 20V12"/></svg>
+      </div>
+      <h2 className="text-xl font-bold text-slate-700">Módulo Próximamente</h2>
+      <p className="text-slate-400 mt-2 max-w-md mx-auto">Estamos trabajando para integrar esta funcionalidad con los datos reales del hospital.</p>
+    </div>
+  </div>
+);
 
 function App() {
   return (

@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const personalRoutes = require('./routes/personalRoutes');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use('/api/personal', personalRoutes);
 app.use('/api/asistencia', asistenciaRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
