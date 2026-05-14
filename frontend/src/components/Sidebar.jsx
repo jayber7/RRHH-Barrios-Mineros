@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Users, Calendar, Clock, Plane, FileBadge, 
-  MessageSquare, RefreshCw, LayoutDashboard 
+  MessageSquare, RefreshCw, LayoutDashboard, Cpu 
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -12,6 +12,7 @@ const Sidebar = () => {
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
     { name: 'Gestión de Personal', icon: <Users size={20} />, path: '/personal' },
     { name: 'Asistencias', icon: <Clock size={20} />, path: '/asistencias' },
+    { name: 'Biométrico', icon: <Cpu size={20} />, path: '/biometrico' },
     { name: 'Turnos', icon: <Calendar size={20} />, path: '/turnos' },
     { name: 'Vacaciones', icon: <Plane size={20} />, path: '/vacaciones' },
     { name: 'Permisos', icon: <FileBadge size={20} />, path: '/permisos' },

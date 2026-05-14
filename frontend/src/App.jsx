@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import PersonalPage from './pages/PersonalPage';
 import AsistenciasPage from './pages/AsistenciasPage';
+import BiometricoPage from './pages/BiometricoPage';
 import Dashboard from './pages/Dashboard';
 
 const Placeholder = ({ title }) => (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/personal" element={<PersonalPage />} />
             <Route path="/asistencias" element={<AsistenciasPage />} />
+            <Route path="/biometrico" element={<BiometricoPage />} />
             <Route path="/turnos" element={<Placeholder title="Turnos" />} />
             <Route path="/vacaciones" element={<Placeholder title="Vacaciones" />} />
             <Route path="/permisos" element={<Placeholder title="Permisos" />} />

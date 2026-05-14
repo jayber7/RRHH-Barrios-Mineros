@@ -20,6 +20,3 @@ start "Frontend - React" cmd /k "cd /d %BASE_PATH%frontend && npm run dev"
 echo.
 echo ==========================================
 echo [OK] Comandos enviados. 
-echo Si una ventana se cierra, revisa que existan las carpetas.
-echo Presione cualquier tecla para cerrar esta ventana de control...
-pause > nul
