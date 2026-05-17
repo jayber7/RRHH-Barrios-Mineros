@@ -2,17 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard, 
-  ChevronLeft, ChevronRight, History, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown
+  ChevronLeft, ChevronRight, History, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown,
+  UserCheck, UserX, ShieldAlert
 } from 'lucide-react';
 import PersonalForm from '../components/PersonalForm';
 import HistorialModal from '../components/HistorialModal';
 import ImportResultsModal from '../components/ImportResultsModal';
+import ColumnSelector, { AVAILABLE_COLUMNS } from '../components/ColumnSelector';
 
 const PersonalPage = () => {
   const [personal, setPersonal] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [catalogos, setCatalogos] = useState({ expediciones: [], profesiones: [] });
-  const [filters, setFilters] = useState({ nombre: '', ci: '', item: '', fuentes: [] });
+  const [filters, setFilters] = useState({ nombre: '', ci: '', item: '', fuentes: [], estado: 'ACTIVO' });
   const [sortConfig, setSortConfig] = useState({ column: null, direction: null });
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -20,19 +22,28 @@ const PersonalPage = () => {
   const [showImportResults, setShowImportResults] = useState(false);
   const [importResults, setImportResults] = useState(null);
   const [selectedPersonal, setSelectedPersonal] = useState(null);
+  const [alertas, setAlertas] = useState({ porVencer: [], vencidos: [], stats: null });
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('personal_grid_columns');
+    if (saved) {
+      try { return JSON.parse(saved); } catch(e) {}
+    }
+    return AVAILABLE_COLUMNS.filter(c => c.default).map(c => c.key);
+  });
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('personal_grid_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   useEffect(() => {
     fetchPersonal(1);
     fetchCatalogos();
+    fetchAlertas();
   }, []);
 
-  // Efecto para búsquedas con debounce o al cambiar filtros
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPersonal(1);
-    }, 300);
-    return () => clearTimeout(timer);
+    fetchPersonal(1);
   }, [filters]);
 
   const fetchPersonal = async (page = 1) => {
@@ -55,6 +66,15 @@ const PersonalPage = () => {
       console.error('Error fetching personal:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAlertas = async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/api/personal/contratos-alertas');
+      setAlertas(response.data);
+    } catch (error) {
+      console.error('Error fetching alertas:', error);
     }
   };
 
@@ -102,8 +122,28 @@ const PersonalPage = () => {
       setShowForm(false);
       setSelectedPersonal(null);
       fetchPersonal();
+      fetchAlertas();
     } catch (error) {
       alert('Error al guardar: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleToggleEstado = async (id, currentEstado) => {
+    const newEstado = currentEstado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    const confirmMsg = newEstado === 'INACTIVO' 
+      ? '¿Está seguro de marcar este registro como INACTIVO? El contrato se dará de baja hoy.'
+      : '¿Está seguro de reactivar este registro?';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await axios.patch(`http://localhost:3001/api/personal/${id}/estado`, {
+        estado: newEstado,
+        fecha_baja: newEstado === 'INACTIVO' ? new Date().toISOString().split('T')[0] : null
+      });
+      fetchPersonal();
+      fetchAlertas();
+    } catch (error) {
+      alert('Error al cambiar estado: ' + error.message);
     }
   };
 
@@ -160,7 +200,29 @@ const PersonalPage = () => {
           <h1 className="text-2xl font-bold text-slate-800">Gestión de Personal</h1>
           <p className="text-slate-500 text-sm">Control y administración de recursos humanos del Hospital Barrios Mineros</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          {alertas.stats && (
+            <div className="flex gap-2 mr-4">
+              {alertas.stats.vencidosCount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-bold">
+                  <ShieldAlert size={14} />
+                  {alertas.stats.vencidosCount} vencidos
+                </div>
+              )}
+              {alertas.stats.porVencerCount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-xs font-bold">
+                  <AlertCircle size={14} />
+                  {alertas.stats.porVencerCount} por vencer
+                </div>
+              )}
+              {alertas.stats.inactivos > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 text-xs font-bold">
+                  <UserX size={14} />
+                  {alertas.stats.inactivos} inactivos
+                </div>
+              )}
+            </div>
+          )}
           <button 
             onClick={() => { setSelectedPersonal(null); setShowForm(true); }}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
@@ -186,6 +248,7 @@ const PersonalPage = () => {
             className="hidden" 
             accept=".xlsx, .xls"
           />
+          <ColumnSelector visibleColumns={visibleColumns} onToggle={setVisibleColumns} />
         </div>
       </div>
 
@@ -225,6 +288,42 @@ const PersonalPage = () => {
         </div>
 
         <div className="flex gap-4 items-center">
+          <span className="text-sm font-medium text-slate-600">Estado:</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilters({ ...filters, estado: 'ACTIVO' })}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                filters.estado === 'ACTIVO'
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                  : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <UserCheck size={14} /> Solo Activos
+            </button>
+            <button
+              onClick={() => setFilters({ ...filters, estado: 'TODOS' })}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                filters.estado === 'TODOS'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                  : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setFilters({ ...filters, estado: 'INACTIVO' })}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                filters.estado === 'INACTIVO'
+                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <UserX size={14} /> Solo Inactivos
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 items-center">
           <span className="text-sm font-medium text-slate-600">Fuente de Financiamiento:</span>
           <div className="flex gap-4">
             {catalogos.fuentes?.map(fuente => (
@@ -248,17 +347,26 @@ const PersonalPage = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
               <tr>
-                <SortableHeader column="ci" label="CI / Doc." sortConfig={sortConfig} onSort={handleSort} />
-                <SortableHeader column="nombre" label="Apellidos y Nombres" sortConfig={sortConfig} onSort={handleSort} />
-                <SortableHeader column="cargo" label="Información Laboral" sortConfig={sortConfig} onSort={handleSort} />
-                <SortableHeader column="profesion" label="Profesión" sortConfig={sortConfig} onSort={handleSort} />
-                <SortableHeader column="telefono" label="Contacto" sortConfig={sortConfig} onSort={handleSort} />
-                <th className="px-6 py-4 font-semibold text-slate-700 text-sm bg-slate-50 text-right">Acciones</th>
+                {visibleColumns.includes('ci') && <SortableHeader column="ci" label="CI / Doc." sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('nombre') && <SortableHeader column="nombre" label="Apellidos y Nombres" sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('tipo_personal') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Tipo</th>}
+                {visibleColumns.includes('fuente') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Fuente</th>}
+                {visibleColumns.includes('identificador') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">N° Ítem</th>}
+                {visibleColumns.includes('cargo') && <SortableHeader column="cargo" label="Cargo Actual" sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('cargo_planilla') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Cargo Planilla</th>}
+                {visibleColumns.includes('unidad') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Unidad / Servicio</th>}
+                {visibleColumns.includes('carga_horaria') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Carga Hor.</th>}
+                {visibleColumns.includes('profesion') && <SortableHeader column="profesion" label="Profesión" sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('telefono') && <SortableHeader column="telefono" label="Teléfono" sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('fecha_ingreso') && <SortableHeader column="fecha_ingreso" label="F. Ingreso" sortConfig={sortConfig} onSort={handleSort} />}
+                {visibleColumns.includes('fecha_fin_contrato') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">F. Fin Contrato</th>}
+                {visibleColumns.includes('observaciones') && <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 whitespace-nowrap">Observaciones</th>}
+                <th className="px-4 py-3 font-semibold text-slate-700 text-xs bg-slate-50 text-right whitespace-nowrap">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                <tr><td colSpan={visibleColumns.length + 1} className="px-6 py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     <span>Cargando datos del personal...</span>
@@ -268,71 +376,137 @@ const PersonalPage = () => {
                 personal.map((p) => (
                   <tr 
                     key={p.id} 
-                    className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                    className={`hover:bg-slate-50/80 transition-colors group cursor-pointer ${p.estado === 'INACTIVO' ? 'opacity-60 bg-slate-50' : ''}`}
                     onDoubleClick={() => { setSelectedPersonal(p); setShowForm(true); }}
                     title="Doble clic para editar"
                   >
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-800">
-                        {p.ci} {p.complemento ? `-${p.complemento}` : ''}
-                      </div>
-                      <div className="text-xs text-slate-500 uppercase">{p.expedicion || 'SIN EXP.'}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-slate-800 font-semibold">{formatFullName(p)}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
-                        <Calendar size={12} /> {formatDate(p.fecha_nacimiento)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-slate-800">{p.cargo_actual || 'SIN CARGO'}</div>
-                      <div className="flex gap-2 mt-1">
-                        {p.identificador_laboral && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-bold uppercase">
-                            Ítem: {p.identificador_laboral}
+                    {visibleColumns.includes('ci') && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-slate-800 text-sm">
+                            {p.ci}{p.complemento ? `-${p.complemento}` : ''}
+                          </div>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            p.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {p.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
                           </span>
-                        )}
-                        {p.nombre_fuente && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded font-bold uppercase">
-                            {p.nombre_fuente}
+                        </div>
+                        <div className="text-[10px] text-slate-500 uppercase">{p.expedicion || ''}</div>
+                      </td>
+                    )}
+                    {visibleColumns.includes('nombre') && (
+                      <td className="px-4 py-3">
+                        <div className="text-slate-800 font-semibold text-sm">{formatFullName(p)}</div>
+                        <div className="text-[10px] text-slate-500">{formatDate(p.fecha_nacimiento)}</div>
+                      </td>
+                    )}
+                    {visibleColumns.includes('tipo_personal') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600 font-medium">{p.tipo_personal || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('fuente') && (
+                      <td className="px-4 py-3">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded font-bold uppercase">{p.nombre_fuente || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('identificador') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600 font-medium">{p.identificador_laboral || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('cargo') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-700 font-medium">{p.cargo_actual || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('cargo_planilla') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600">{p.cargo_planilla || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('unidad') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600">{p.unidad_servicio || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('carga_horaria') && (
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs font-bold text-slate-700">{p.carga_horaria || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('profesion') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600">{p.nombre_profesion || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('telefono') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600">{p.telefono || '-'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('fecha_ingreso') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-600">{formatDate(p.fecha_ingreso)}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('fecha_fin_contrato') && (
+                      <td className="px-4 py-3">
+                        {p.fecha_fin_contrato ? (
+                          <span className={`text-xs font-medium ${
+                            new Date(p.fecha_fin_contrato) < new Date() ? 'text-red-600' : 'text-slate-600'
+                          }`}>
+                            {formatDate(p.fecha_fin_contrato)}
                           </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
-                        {p.nombre_profesion || 'No asignada'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Phone size={14} className="text-slate-400" />
-                        {p.telefono || '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                      </td>
+                    )}
+                    {visibleColumns.includes('observaciones') && (
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-slate-500 max-w-xs truncate block" title={p.observaciones}>{p.observaciones || '-'}</span>
+                      </td>
+                    )}
+                    <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
                         <button 
-                          onClick={() => { setSelectedPersonal(p); setShowHistorial(true); }}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                          title="Ver trayectoria laboral"
+                          onClick={(e) => { e.stopPropagation(); handleToggleEstado(p.id, p.estado); }}
+                          className={`p-1.5 rounded-lg transition-all ${
+                            p.estado === 'ACTIVO'
+                              ? 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+                              : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                          }`}
+                          title={p.estado === 'ACTIVO' ? 'Marcar como inactivo' : 'Reactivar'}
                         >
-                          <History size={18} />
+                          {p.estado === 'ACTIVO' ? <UserX size={16} /> : <UserCheck size={16} />}
                         </button>
                         <button 
-                          onClick={() => { setSelectedPersonal(p); setShowForm(true); }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          onClick={(e) => { e.stopPropagation(); setSelectedPersonal(p); setShowHistorial(true); }}
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                          title="Ver trayectoria laboral"
+                        >
+                          <History size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setSelectedPersonal(p); setShowForm(true); }}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                           title="Editar registro"
                         >
-                          <Edit size={18} />
+                          <Edit size={16} />
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-500">
-                  No se encontró personal registrado con los criterios de búsqueda.
+                <tr><td colSpan={visibleColumns.length + 1} className="px-6 py-12 text-center text-slate-500">
+                  {filters.estado === 'ACTIVO' 
+                    ? 'No hay personal activo con los criterios de búsqueda.'
+                    : filters.estado === 'INACTIVO'
+                    ? 'No hay personal inactivo con los criterios de búsqueda.'
+                    : 'No se encontró personal registrado con los criterios de búsqueda.'}
                 </td></tr>
               )}
             </tbody>

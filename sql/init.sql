@@ -50,7 +50,9 @@ CREATE TABLE personal (
     fecha_nacimiento DATE,
     profesion_id INT REFERENCES cat_profesiones(id),
     telefono VARCHAR(20),
-    biometrico_id VARCHAR(50) UNIQUE
+    biometrico_id VARCHAR(50) UNIQUE,
+    estado VARCHAR(20) DEFAULT 'ACTIVO',
+    fecha_baja DATE
 );
 
 CREATE TABLE vinculos_laborales (

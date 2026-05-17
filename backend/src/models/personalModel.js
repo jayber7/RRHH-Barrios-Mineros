@@ -14,6 +14,7 @@ class PersonalModel {
         vl.nro_resumen_ejecutivo,
         vl.unidad_servicio,
         vl.unidad_servicio_id,
+        vl.carga_horaria,
         vl.fecha_ingreso,
         vl.fecha_fin_contrato,
         ff.nombre_fuente,
@@ -63,6 +64,12 @@ class PersonalModel {
       const placeholders = filters.fuentes.map((_, i) => `$${params.length + i + 1}`).join(',');
       query += ` AND vl.fuente_financiamiento_id IN (${placeholders})`;
       params.push(...filters.fuentes);
+    }
+
+    if (filters.estado === 'ACTIVO') {
+      query += ` AND p.estado = 'ACTIVO'`;
+    } else if (filters.estado === 'INACTIVO') {
+      query += ` AND p.estado = 'INACTIVO'`;
     }
 
     const sortColumns = {
@@ -168,7 +175,7 @@ class PersonalModel {
       const personalFields = [
         'ci', 'complemento', 'exp_id', 'apellido_paterno', 'apellido_materno', 
         'apellido_casada', 'primer_nombre', 'segundo_nombre', 'tercer_nombre', 
-        'fecha_nacimiento', 'profesion_id', 'telefono', 'biometrico_id'
+        'fecha_nacimiento', 'profesion_id', 'telefono', 'biometrico_id', 'estado', 'fecha_baja'
       ];
 
       const laboralFields = [
