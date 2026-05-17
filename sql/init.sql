@@ -44,7 +44,8 @@ CREATE TABLE personal (
     tercer_nombre VARCHAR(100),
     fecha_nacimiento DATE,
     profesion_id INT REFERENCES cat_profesiones(id),
-    telefono VARCHAR(20)
+    telefono VARCHAR(20),
+    biometrico_id VARCHAR(50) UNIQUE
 );
 
 CREATE TABLE vinculos_laborales (
@@ -62,6 +63,26 @@ CREATE TABLE vinculos_laborales (
     observaciones TEXT
 );
 
+-- Tablas de Asistencia
+CREATE TABLE asistencia_mensual (
+    id SERIAL PRIMARY KEY,
+    personal_id INT REFERENCES personal(id) ON DELETE CASCADE,
+    mes INT NOT NULL,
+    anio INT NOT NULL,
+    total_horas NUMERIC(10, 2) DEFAULT 0,
+    total_atrasos_min INT DEFAULT 0,
+    observaciones TEXT DEFAULT '',
+    tipo_planilla VARCHAR(50),
+    UNIQUE(personal_id, mes, anio, tipo_planilla)
+);
+
+CREATE TABLE asistencia_diaria (
+    id SERIAL PRIMARY KEY,
+    asistencia_id INT REFERENCES asistencia_mensual(id) ON DELETE CASCADE,
+    dia INT NOT NULL,
+    valor VARCHAR(10)
+);
+
 INSERT INTO cat_fuentes_financiamiento (nombre_fuente) VALUES 
 ('TGN'), ('HIPC'), ('MINISTERIO'), ('MUNICIPIO');
 
@@ -75,3 +96,27 @@ INSERT INTO cat_expediciones (sigla, nombre) VALUES
 ('TJ', 'Tarija'), ('PT', 'Potosí'), ('CH', 'Chuquisaca');
 
 INSERT INTO establecimientos (nombre_establecimiento) VALUES ('HBM - Hospital Barrios Mineros');
+
+-- Tablas de Biometría
+CREATE TABLE biometrico_config (
+    id SERIAL PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    port INT DEFAULT 4370,
+    comms_key INT DEFAULT 0,
+    estado VARCHAR(20) DEFAULT 'DESCONECTADO',
+    ultimo_sync_usuarios TIMESTAMP,
+    ultimo_sync_logs TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE biometrico_logs_raw (
+    id SERIAL PRIMARY KEY,
+    biometrico_id VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    verificacion_tipo INT DEFAULT 0,
+    estado_asistencia INT DEFAULT 0,
+    device_ip VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(biometrico_id, timestamp)
+);

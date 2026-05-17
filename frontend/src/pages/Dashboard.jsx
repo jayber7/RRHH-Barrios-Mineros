@@ -11,20 +11,45 @@ import {
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:3001/api/dashboard/stats')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        return res.json();
+      })
       .then(data => {
         setStats(data);
         setLoading(false);
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   if (loading) return <div className="p-8">Cargando dashboard...</div>;
+
+  if (error) return (
+    <div className="p-8 bg-slate-50 min-h-screen">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <h3 className="font-bold">Error al cargar el dashboard</h3>
+        <p className="text-sm">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!stats) return <div className="p-8">No hay datos disponibles</div>;
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
@@ -37,27 +62,27 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard 
           title="Personal Total" 
-          value={stats.totales.personal} 
+          value={stats?.totales?.personal ?? 0} 
           icon={<Users className="text-blue-600" />} 
           trend="+2.5%" 
           up={true}
         />
         <StatCard 
           title="Horas Trabajadas" 
-          value={Math.round(stats.totales.horas)} 
+          value={Math.round(stats?.totales?.horas ?? 0)} 
           icon={<Clock className="text-emerald-600" />} 
           subtitle="Mes de Abril"
         />
         <StatCard 
           title="Minutos Atraso" 
-          value={stats.totales.atrasos} 
+          value={stats?.totales?.atrasos ?? 0} 
           icon={<AlertTriangle className="text-rose-600" />} 
           trend="-12%" 
           up={false}
         />
         <StatCard 
           title="Financiamiento" 
-          value={stats.fuentesDistribucion.length} 
+          value={stats?.fuentesDistribucion?.length ?? 0} 
           icon={<DollarSign className="text-amber-600" />} 
           subtitle="Fuentes Activas"
         />
@@ -71,7 +96,7 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={stats.tipoDistribucion}
+                  data={stats?.tipoDistribucion ?? []}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -80,7 +105,7 @@ const Dashboard = () => {
                   dataKey="value"
                   label={({label}) => label}
                 >
-                  {stats.tipoDistribucion.map((entry, index) => (
+                  {(stats?.tipoDistribucion ?? []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -96,7 +121,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-bold text-slate-800 mb-6">Personal por Fuente</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.fuentesDistribucion}>
+              <BarChart data={stats?.fuentesDistribucion ?? []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
@@ -113,7 +138,7 @@ const Dashboard = () => {
         <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-6">Ranking de Atrasos</h3>
           <div className="space-y-4">
-            {stats.topAtrasos.map((item, i) => (
+            {(stats?.topAtrasos ?? []).map((item, i) => (
               <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center font-bold text-xs shadow-sm">
