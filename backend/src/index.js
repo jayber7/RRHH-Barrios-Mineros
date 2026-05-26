@@ -20,9 +20,13 @@ app.use('/api/asistencia', asistenciaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/biometrico', biometricoRoutes);
 
-// Basic Route
+// Health Check
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Start Server

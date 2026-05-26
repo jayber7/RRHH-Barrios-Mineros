@@ -4,6 +4,7 @@ import {
   Link, UserCheck, AlertCircle, CheckCircle2,
   Clock, Activity
 } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const BiometricoPage = () => {
   const [config, setConfig] = useState({ ip_address: '', port: 4370, comms_key: '0' });
@@ -17,13 +18,13 @@ const BiometricoPage = () => {
   }, []);
 
   const fetchConfig = async () => {
-    const res = await fetch('http://localhost:3001/api/biometrico/config');
+    const res = await fetch(`${API_BASE_URL}/api/biometrico/config`);
     const data = await res.json();
     if (data.ip_address) setConfig(data);
   };
 
   const fetchLogs = async () => {
-    const res = await fetch('http://localhost:3001/api/biometrico/raw-logs');
+    const res = await fetch(`${API_BASE_URL}/api/biometrico/raw-logs`);
     const data = await res.json();
     setLogs(data);
   };
@@ -31,7 +32,7 @@ const BiometricoPage = () => {
   const handleUpdateConfig = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/biometrico/config', {
+      const res = await fetch(`${API_BASE_URL}/api/biometrico/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -48,7 +49,7 @@ const BiometricoPage = () => {
     setLoading(true);
     setStatus({ type: 'info', text: 'Conectando con el equipo y extrayendo logs...' });
     try {
-      const res = await fetch('http://localhost:3001/api/biometrico/sync-logs', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/biometrico/sync-logs`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setStatus({ type: 'success', text: `Sincronización completa. Registros: ${data.nuevosGuardados}` });

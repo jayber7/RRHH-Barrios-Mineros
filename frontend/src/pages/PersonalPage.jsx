@@ -7,6 +7,7 @@ import {
 import PersonalForm from '../components/PersonalForm';
 import HistorialModal from '../components/HistorialModal';
 import ImportResultsModal from '../components/ImportResultsModal';
+import { API_BASE_URL } from '../config/api';
 
 const PersonalPage = () => {
   const [personal, setPersonal] = useState([]);
@@ -37,7 +38,7 @@ const PersonalPage = () => {
   const fetchPersonal = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3001/api/personal', { 
+      const response = await axios.get(`${API_BASE_URL}/api/personal`, { 
         params: { 
           ...filters, 
           fuentes: filters.fuentes.join(','),
@@ -56,7 +57,7 @@ const PersonalPage = () => {
 
   const fetchCatalogos = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/personal/catalogos');
+      const response = await axios.get(`${API_BASE_URL}/api/personal/catalogos`);
       setCatalogos(response.data);
     } catch (error) {
       console.error('Error fetching catalogos:', error);
@@ -75,9 +76,9 @@ const PersonalPage = () => {
   const handleSave = async (data) => {
     try {
       if (selectedPersonal) {
-        await axios.put(`http://localhost:3001/api/personal/${selectedPersonal.id}`, data);
+        await axios.put(`${API_BASE_URL}/api/personal/${selectedPersonal.id}`, data);
       } else {
-        await axios.post('http://localhost:3001/api/personal', data);
+        await axios.post(`${API_BASE_URL}/api/personal`, data);
       }
       setShowForm(false);
       setSelectedPersonal(null);
@@ -92,7 +93,7 @@ const PersonalPage = () => {
       ...filters,
       fuentes: filters.fuentes.join(',')
     }).toString();
-    window.open(`http://localhost:3001/api/personal/export?${params}`);
+    window.open(`${API_BASE_URL}/api/personal/export?${params}`);
   };
 
   const handleImport = async (e) => {
@@ -104,7 +105,7 @@ const PersonalPage = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:3001/api/personal/import', formData);
+      const response = await axios.post(`${API_BASE_URL}/api/personal/import`, formData);
       setImportResults(response.data);
       setShowImportResults(true);
       fetchPersonal();

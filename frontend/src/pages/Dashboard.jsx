@@ -7,13 +7,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend 
 } from 'recharts';
+import { API_BASE_URL } from '../config/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/dashboard/stats')
+    fetch(`${API_BASE_URL}/api/dashboard/stats`)
       .then(res => res.json())
       .then(data => {
         setStats(data);

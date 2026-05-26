@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronUp, MoreVertical, Plus, AlertCircle
 } from 'lucide-react';
 import AsistenciaImport from '../components/AsistenciaImport';
+import { API_BASE_URL } from '../config/api';
 
 const AsistenciasPage = () => {
   const [asistencias, setAsistencias] = useState([]);
@@ -21,7 +22,7 @@ const AsistenciasPage = () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams(filters).toString();
-      const response = await fetch(`http://localhost:3001/api/asistencia?${queryParams}`);
+      const response = await fetch(`${API_BASE_URL}/api/asistencia?${queryParams}`);
       const data = await response.json();
       setAsistencias(data);
     } catch (error) {
@@ -38,7 +39,7 @@ const AsistenciasPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Está seguro de eliminar este registro de asistencia?')) return;
     try {
-      await fetch(`http://localhost:3001/api/asistencia/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/asistencia/${id}`, { method: 'DELETE' });
       fetchAsistencias();
     } catch (error) {
       alert('Error al eliminar');

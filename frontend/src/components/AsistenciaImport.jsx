@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, FileSpreadsheet, Calendar, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import ImportResultsModal from './ImportResultsModal';
+import { API_BASE_URL } from '../config/api';
 
 const AsistenciaImport = () => {
   const [file, setFile] = useState(null);
@@ -33,7 +34,7 @@ const AsistenciaImport = () => {
     formData.append('anio', anio);
 
     try {
-      const response = await fetch('http://localhost:3001/api/asistencia/import', {
+      const response = await fetch(`${API_BASE_URL}/api/asistencia/import`, {
         method: 'POST',
         body: formData,
       });
