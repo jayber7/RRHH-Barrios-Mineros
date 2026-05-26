@@ -18,15 +18,30 @@ const BiometricoPage = () => {
   }, []);
 
   const fetchConfig = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/biometrico/config`);
-    const data = await res.json();
-    if (data.ip_address) setConfig(data);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/biometrico/config`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ip_address) setConfig(data);
+      }
+    } catch (e) {
+      console.error('Error fetching config:', e);
+    }
   };
 
   const fetchLogs = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/biometrico/raw-logs`);
-    const data = await res.json();
-    setLogs(data);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/biometrico/raw-logs`);
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(Array.isArray(data) ? data : []);
+      } else {
+        setLogs([]);
+      }
+    } catch (e) {
+      console.error('Error fetching logs:', e);
+      setLogs([]);
+    }
   };
 
   const handleUpdateConfig = async () => {
