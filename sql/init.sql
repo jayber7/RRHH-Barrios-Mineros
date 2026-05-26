@@ -89,7 +89,7 @@ CREATE TABLE asistencia_mensual (
     observaciones TEXT,
     tipo_planilla VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(personal_id, mes, anio)
+    UNIQUE(personal_id, mes, anio, tipo_planilla)
 );
 
 CREATE TABLE asistencia_diaria (
@@ -97,6 +97,17 @@ CREATE TABLE asistencia_diaria (
     asistencia_id INT REFERENCES asistencia_mensual(id) ON DELETE CASCADE,
     dia INT NOT NULL,
     valor VARCHAR(10)
+);
+
+CREATE TABLE asistencia_rotaciones (
+    id SERIAL PRIMARY KEY,
+    personal_id INT REFERENCES personal(id),
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    rotacion_de VARCHAR(150),
+    rotacion_a VARCHAR(150),
+    tiempo_rotacion VARCHAR(50),
+    observaciones TEXT
 );
 
 CREATE TABLE biometrico_config (
