@@ -14,6 +14,8 @@ import CorrespondenciaForm from './pages/CorrespondenciaForm';
 import CorrespondenciaDetail from './pages/CorrespondenciaDetail';
 import BandejaPage from './pages/BandejaPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
+import TurnosPage from './pages/TurnosPage';
+import SancionesConfig from './components/SancionesConfig';
 
 const Placeholder = ({ title }) => (
   <div className="p-8 bg-slate-50 min-h-screen">
@@ -101,7 +103,7 @@ function AppContent() {
           <Route path="/personal" element={<PersonalPage />} />
           <Route path="/asistencias" element={<AsistenciasPage />} />
           <Route path="/biometrico" element={<BiometricoPage />} />
-          <Route path="/turnos" element={<Placeholder title="Turnos" />} />
+          <Route path="/turnos" element={<TurnosPage />} />
           <Route path="/vacaciones" element={<Placeholder title="Vacaciones" />} />
           <Route path="/permisos" element={<Placeholder title="Permisos" />} />
           <Route path="/certificaciones" element={<Placeholder title="Certificaciones" />} />
@@ -113,6 +115,7 @@ function AppContent() {
           <Route path="/correspondencia/:id" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><CorrespondenciaDetail /></ProtectedRoute>} />
           <Route path="/correspondencia/bandeja" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><BandejaPage /></ProtectedRoute>} />
           <Route path="/admin/config" element={<ProtectedRoute roles={['ADMIN']}><ConfiguracionPage /></ProtectedRoute>} />
+          <Route path="/admin/sanciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><div className="p-8 bg-slate-50 min-h-screen"><h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-8">Configuración de Sanciones</h1><SancionesConfig /></div></ProtectedRoute>} />
         </Routes>
       </main>
     </div>

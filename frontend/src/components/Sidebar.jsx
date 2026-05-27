@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Users, Calendar, Clock, Plane, FileBadge, 
   MessageSquare, RefreshCw, LayoutDashboard, Cpu,
-  FileSpreadsheet, FileText, Inbox, Settings, LogOut
+  FileSpreadsheet, FileText, Inbox, Settings, LogOut, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -30,6 +30,7 @@ const Sidebar = () => {
 
   const adminItems = [
     { name: 'Configuración', icon: <Settings size={20} />, path: '/admin/config' },
+    { name: 'Sanciones', icon: <AlertTriangle size={20} />, path: '/admin/sanciones' },
   ];
 
   const isActive = (path) => location.pathname === path;

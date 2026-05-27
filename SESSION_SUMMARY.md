@@ -1,29 +1,38 @@
-# Resumen de Sesión - 13 de Mayo, 2026 (Final)
+# Resumen de Sesión — 27 Mayo 2026
 
-## Hitos Logrados
-1. **Módulo Biométrico ZKTeco:** 
-   - Instalación de dependencias (`node-zklib`, `node-cron`).
-   - Diseño e implementación de tablas `biometrico_config` y `biometrico_logs_raw`.
-   - Creación de `BiometricoService`, `BiometricoController` y rutas para descarga de logs crudos.
-   - Interfaz de usuario `/biometrico` para configuración y monitoreo de marcaciones en tiempo real.
-2. **Dashboard Estratégico:** 
-   - Corregidos errores de carga mediante la creación de catálogos base (`ÍTEM`, `TGN`, etc.) y `LEFT JOIN` resilientes.
-   - Gráficos de Composición de Personal y Fuentes de Financiamiento totalmente funcionales con Recharts.
-3. **Estabilidad y UI:**
-   - Corregido error `Cpu is not defined` en el Sidebar.
-   - Restaurado y mejorado el componente `Placeholder` en `App.jsx`.
-   - Sincronización completa con **Notion** del consolidado mensual de asistencia.
-4. **Git:** Sincronización y merge exitoso de todas las funciones a la rama `main`.
+## Objetivo
+Importar asistencias desde el legado ASIS a la base de datos PostgreSQL, especialmente 2026.
 
-## Estado de la Base de Datos
-- **Personal:** 243 registros reales cargados.
-- **Vínculos:** Todos los registros vinculados a `ÍTEM` y `TGN` (valores por defecto para visualización).
-- **Biométrico:** Columna `biometrico_id` lista para recibir mapeo de IDs.
+## Resultados
 
-## Pendientes Inmediatos para la Próxima Sesión
-- **Mapeo Biométrico:** Asignar IDs reales de los equipos ZK a la tabla `personal`.
-- **Módulo de Turnos:** Diseñar el esquema de horarios rotativos complejos para cruzar con las marcas crudas.
-- **Automatización:** Configurar el Cron Job para descarga nocturna de logs.
+### Datos importados
+| Concepto | Cantidad | Período |
+|----------|----------|---------|
+| Marcaciones biométricas | 108,989 | Oct 2022 – May 2026 |
+| Justificaciones | 1,676 | Principalmente 2025 |
+| Registros mensuales | 4,402 | 45 meses |
+| Registros diarios | 133,734 | 45 meses |
 
-## Comandos de Inicio
-- Ejecutar `start-project.cmd` en la raíz para levantar Backend (3001) y Frontend (5173).
+### Cálculo de asistencias completado
+| Año | Meses | Empleados/mes | Días calculados |
+|-----|-------|---------------|-----------------|
+| 2024 | 12 | ~100 | 36,872 |
+| 2025 | 12 | ~103 | 37,300 |
+| 2026 | 5 (Ene–May) | ~105 | 15,609 |
+
+## Archivos modificados/creados
+
+### Código
+- `backend/src/services/calculoAsistenciaService.js` — `procesarMes` crea registros si no existen; `procesarTodos` filtrado
+- `sql/import_asis_attendance.py` — Script para importar Transactions.csv y justificacionesNuevas.csv
+- `sql/generate_monthly_asistencia.sql` — Genera registros mensuales/diarios
+- `backend/scripts/run_calculo_masivo.js` — Script de cálculo por año
+
+### Documentación
+- `README.md` — Actualizado con estado actual de BD, funcionalidades
+- `TODO.md` — Roadmap completo con fases
+- `PROJECT_CONTEXT.md` — Estado por módulo
+- `ARCHITECTURE.md` — Esquema de BD detallado, motor de cálculo
+- `DEPLOY.md` — Nuevo: plan de migración a Render
+- `GEMINI.md` — Historial de sesión actualizado
+- `SESSION_SUMMARY.md` — Este archivo

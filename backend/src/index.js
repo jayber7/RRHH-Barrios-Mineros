@@ -12,6 +12,9 @@ const authRoutes = require('./routes/authRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const correspondenciaRoutes = require('./routes/correspondenciaRoutes');
 const configRoutes = require('./routes/configRoutes');
+const turnosRoutes = require('./routes/turnosRoutes');
+const justificacionesRoutes = require('./routes/justificacionesRoutes');
+const sancionesRoutes = require('./routes/sancionesRoutes');
 const { startEstadoJob } = require('./cron/estadoJob');
 
 const app = express();
@@ -32,6 +35,9 @@ app.use('/api/asistencia', asistenciaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/biometrico', biometricoRoutes);
 app.use('/api/reportes', reporteRoutes);
+app.use('/api/turnos', turnosRoutes);
+app.use('/api/justificaciones', justificacionesRoutes);
+app.use('/api/sanciones', sancionesRoutes);
 
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');
