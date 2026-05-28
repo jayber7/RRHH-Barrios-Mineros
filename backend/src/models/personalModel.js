@@ -14,7 +14,15 @@ class PersonalModel {
         vl.cargo_escala,
         vl.nro_resumen_ejecutivo,
         vl.unidad_servicio,
+        vl.unidad_servicio_id,
         vl.fecha_ingreso,
+        vl.establecimiento_id,
+        vl.tipo_personal_id,
+        vl.fuente_financiamiento_id,
+        vl.carga_horaria,
+        vl.fecha_institucionalizacion,
+        vl.fecha_fin_contrato,
+        vl.observaciones,
         ff.nombre_fuente,
         tp.nombre_tipo as tipo_personal,
         est.nombre_establecimiento,
@@ -102,9 +110,10 @@ class PersonalModel {
         fecha_nacimiento, profesion_id, telefono,
         // Datos laborales
         establecimiento_id, tipo_personal_id, fuente_financiamiento_id,
-        identificador_laboral, unidad_servicio, cargo_actual,
+        identificador_laboral, unidad_servicio, unidad_servicio_id, cargo_actual,
         cargo_planilla, cargo_escala, nro_resumen_ejecutivo,
-        carga_horaria, fecha_ingreso, fecha_institucionalizacion, observaciones
+        carga_horaria, fecha_ingreso, fecha_institucionalizacion, observaciones,
+        fecha_fin_contrato
       } = data;
 
       const personalQuery = `
@@ -128,17 +137,19 @@ class PersonalModel {
       const laboralQuery = `
         INSERT INTO vinculos_laborales (
           personal_id, establecimiento_id, tipo_personal_id, fuente_financiamiento_id,
-          identificador_laboral, unidad_servicio, cargo_actual,
+          identificador_laboral, unidad_servicio, unidad_servicio_id, cargo_actual,
           cargo_planilla, cargo_escala, nro_resumen_ejecutivo,
-          carga_horaria, fecha_ingreso, fecha_institucionalizacion, observaciones
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          carga_horaria, fecha_ingreso, fecha_institucionalizacion, observaciones,
+          fecha_fin_contrato
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       `;
       const laboralValues = [
         personalId, establecimiento_id || null, tipo_personal_id || null, 
         fuente_financiamiento_id || null, identificador_laboral || null, 
-        unidad_servicio || null, cargo_actual || null, 
+        unidad_servicio || null, unidad_servicio_id || null, cargo_actual || null, 
         cargo_planilla || null, cargo_escala || null, nro_resumen_ejecutivo || null,
-        carga_horaria || null, fecha_ingreso || null, fecha_institucionalizacion || null, observaciones || null
+        carga_horaria || null, fecha_ingreso || null, fecha_institucionalizacion || null, observaciones || null,
+        fecha_fin_contrato || null
       ];
 
       await client.query(laboralQuery, laboralValues);
@@ -174,9 +185,10 @@ class PersonalModel {
 
       const laboralFields = [
         'establecimiento_id', 'tipo_personal_id', 'fuente_financiamiento_id',
-        'identificador_laboral', 'unidad_servicio', 'cargo_actual',
+        'identificador_laboral', 'unidad_servicio', 'unidad_servicio_id', 'cargo_actual',
         'cargo_planilla', 'cargo_escala', 'nro_resumen_ejecutivo',
-        'carga_horaria', 'fecha_ingreso', 'fecha_institucionalizacion', 'observaciones'
+        'carga_horaria', 'fecha_ingreso', 'fecha_institucionalizacion', 'observaciones',
+        'fecha_fin_contrato'
       ];
 
       // Actualizar Personal

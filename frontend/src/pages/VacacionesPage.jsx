@@ -81,7 +81,10 @@ const VacacionesPage = () => {
   const fetchPersonal = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/personal?limit=300`);
-      if (res.ok) setPersonalList(await res.json());
+      if (res.ok) {
+        const json = await res.json();
+        setPersonalList(json.data || json || []);
+      }
     } catch (e) { console.error(e); }
   };
 

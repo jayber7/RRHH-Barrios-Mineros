@@ -11,6 +11,7 @@ class DashboardService {
       : '';
     const unidadJoin = unidad ? `JOIN vinculos_laborales vl ON vl.personal_id = p.id` : '';
 
+
     const [totalPersonal, tipoDist, asistenciaRes, topAtrasos,
            distEstados, distUnidades, tendencia, nocturnos, ausentismo,
            topFaltas, comparativo, radarUnidad] = await Promise.all([
@@ -28,7 +29,7 @@ class DashboardService {
         FROM asistencia_mensual am
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
-        WHERE mes = $1 AND anio = $2 ${unidad ? `AND (${unidad.replace(/^AND /, '')})` : ''}
+        WHERE mes = $1 AND anio = $2 ${unidadWhere}
         GROUP BY tipo_planilla
       `, [targetMes, targetAnio]),
       db.query(`
@@ -48,7 +49,7 @@ class DashboardService {
         JOIN asistencia_mensual am ON ad.asistencia_id = am.id
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
-        WHERE am.mes = $1 AND am.anio = $2 ${unidad ? `AND (${unidad.replace(/^AND /, '')})` : ''}
+        WHERE am.mes = $1 AND am.anio = $2 ${unidadWhere}
         GROUP BY ad.estado ORDER BY ad.estado
       `, [targetMes, targetAnio]),
       db.query(`
@@ -66,7 +67,7 @@ class DashboardService {
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
         WHERE anio = $1 AND mes BETWEEN 1 AND 12
-        ${unidad ? `AND (${unidad.replace(/^AND /, '')})` : ''}
+        ${unidadWhere}
         GROUP BY mes, anio ORDER BY anio, mes
       `, [targetAnio]),
       db.query(`
@@ -77,7 +78,7 @@ class DashboardService {
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
         WHERE am.mes = $1 AND am.anio = $2 AND ad.estado = 5
-        ${unidad ? `AND (${unidad.replace(/^AND /, '')})` : ''}
+        ${unidadWhere}
       `, [targetMes, targetAnio]),
       db.query(`
         SELECT
@@ -88,7 +89,7 @@ class DashboardService {
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
         WHERE am.mes = $1 AND am.anio = $2
-        ${unidad ? `AND (${unidad.replace(/^AND /, '')})` : ''}
+        ${unidadWhere}
       `, [targetMes, targetAnio]),
       db.query(`
         SELECT p.id, p.ci, p.primer_nombre, p.apellido_paterno, p.apellido_materno,

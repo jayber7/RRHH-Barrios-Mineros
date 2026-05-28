@@ -11,10 +11,10 @@ function startEstadoJob() {
         UPDATE personal SET estado = 'INACTIVO', fecha_baja = $1
         WHERE id IN (
           SELECT p.id FROM personal p
-          JOIN vinculos_laborales vl ON p.id = vl.personal_id
-          WHERE p.estado = 'ACTIVO'
-            AND vl.fecha_fin_contrato IS NOT NULL
-            AND vl.fecha_fin_contrato < $1
+          JOIN contratos c ON p.id = c.personal_id
+          WHERE (p.estado IS NULL OR p.estado = 'ACTIVO')
+            AND c.fecha_fin IS NOT NULL
+            AND c.fecha_fin < $1
         )
       `, [today]);
 

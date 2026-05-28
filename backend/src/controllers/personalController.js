@@ -128,8 +128,8 @@ const getContratosPorVencer = async (req, res) => {
       ORDER BY vl.fecha_fin_contrato ASC
     `);
 
-    const activos = await db.query(`SELECT COUNT(*) as count FROM personal WHERE activo = true`);
-    const inactivos = await db.query(`SELECT COUNT(*) as count FROM personal WHERE activo = false`);
+    const activos = await db.query(`SELECT COUNT(*) as count FROM personal WHERE estado = 'ACTIVO'`);
+    const inactivos = await db.query(`SELECT COUNT(*) as count FROM personal WHERE estado IS DISTINCT FROM 'ACTIVO'`);
 
     res.json({
       vencidos: vencidos.rows,
@@ -150,7 +150,7 @@ const autoInactivarVencidos = async (req, res) => {
   try {
     const { rowCount } = await db.query(`
       UPDATE personal 
-      SET activo = false 
+      SET estado = 'INACTIVO', fecha_baja = CURRENT_DATE
       WHERE id IN (
         SELECT vl.personal_id 
         FROM vinculos_laborales vl 
