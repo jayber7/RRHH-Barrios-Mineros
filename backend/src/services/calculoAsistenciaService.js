@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const TurnosService = require('./turnosService');
+const ConfiguracionService = require('./configuracionService');
 
 class CalculoAsistenciaService {
   static _timeToMin(t) {
@@ -39,7 +40,9 @@ class CalculoAsistenciaService {
     if (salidaMinutos < entradaMinutos) salidaMinutos += 1440;
     const horasTurno = Math.round((salidaMinutos - entradaMinutos) / 60 * 100) / 100;
 
-    const offsetHoras = nocturno ? 12 : 6;
+    const nocturnoOffset = await ConfiguracionService.get('ventana_busqueda_nocturna_h', 12);
+    const diurnoOffset = await ConfiguracionService.get('ventana_busqueda_diurna_h', 6);
+    const offsetHoras = nocturno ? nocturnoOffset : diurnoOffset;
     const { rows: logs } = await db.query(`
       SELECT timestamp, verificacion_tipo FROM biometrico_logs_raw
       WHERE biometrico_id::text = (SELECT biometrico_id::text FROM personal WHERE id = $1)
@@ -54,11 +57,11 @@ class CalculoAsistenciaService {
     const ultima = logs[logs.length - 1].timestamp;
 
     const llegadaMinutos = primera.getHours() * 60 + primera.getMinutes();
-    const tolerancia = turno.tolerancia_atraso || 5;
+    const tolerancia = turno.tolerancia_atraso || (await ConfiguracionService.get('tolerancia_atraso_default', 5));
     let minutosAtraso = Math.max(0, llegadaMinutos - entradaMinutos - tolerancia);
 
-    const UMBRAL_ATRASO_HORAS = 4;
-    if (llegadaMinutos - entradaMinutos > UMBRAL_ATRASO_HORAS * 60) {
+    const umbralAtrasoHoras = await ConfiguracionService.get('umbral_maximo_atraso_horas', 4);
+    if (llegadaMinutos - entradaMinutos > umbralAtrasoHoras * 60) {
       minutosAtraso = 0;
     }
 

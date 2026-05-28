@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const TurnosService = require('./turnosService');
+const ConfiguracionService = require('./configuracionService');
 
 class ValidacionesService {
   static async marcasSinPersonal(fechaInicio, fechaFin) {
@@ -24,7 +25,7 @@ class ValidacionesService {
       FROM biometrico_logs_raw l1
       JOIN biometrico_logs_raw l2 ON l1.biometrico_id = l2.biometrico_id
         AND l2.timestamp > l1.timestamp
-        AND l2.timestamp <= l1.timestamp + interval '5 minutes'
+        AND l2.timestamp <= l1.timestamp + (interval '1 minute' * (SELECT COALESCE((SELECT valor::integer FROM configuracion_sistema WHERE clave = 'ventana_marcas_duplicadas_min'), 5)))
       LEFT JOIN personal p ON l1.biometrico_id = p.biometrico_id
       WHERE l1.timestamp >= $1::date
         AND l1.timestamp < $2::date + interval '1 day'
@@ -33,7 +34,18 @@ class ValidacionesService {
     return rows;
   }
 
+  static async _getUmbralFueraHorario() {
+    return await ConfiguracionService.get('umbral_fuera_horario_min', 120);
+  }
+
+  static async _getDuracionTurnoDefault() {
+    return await ConfiguracionService.get('duracion_turno_default_min', 480);
+  }
+
   static async marcasFueraDeHorario(fechaInicio, fechaFin) {
+    const umbral = await ConfiguracionService.get('umbral_fuera_horario_min', 120);
+    const duracionDefault = await ConfiguracionService.get('duracion_turno_default_min', 480);
+
     const { rows: logs } = await db.query(`
       SELECT l.id, l.biometrico_id, l.timestamp,
              p.id AS personal_id, p.primer_nombre, p.apellido_paterno
@@ -72,7 +84,7 @@ class ValidacionesService {
       const entradaMin = entrada.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m));
 
       if (noche) {
-        const salidaMin = salida ? salida.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : entradaMin + 480;
+        const salidaMin = salida ? salida.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : entradaMin + duracionDefault;
         const logMinAdjusted = log.timestamp.getHours() < 12 ? logMin + 1440 : logMin;
         const entradaAdjusted = entradaMin < 720 ? entradaMin + 1440 : entradaMin;
         const salidaAdjusted = salidaMin < 720 && salidaMin > 0 ? salidaMin + 1440 : salidaMin;
@@ -80,15 +92,15 @@ class ValidacionesService {
         const diffEntrada = Math.abs(logMinAdjusted - entradaAdjusted);
         const diffSalida = Math.abs(logMinAdjusted - salidaAdjusted);
 
-        if (diffEntrada > 120 && diffSalida > 120) {
+        if (diffEntrada > umbral && diffSalida > umbral) {
           resultados.push({ ...log, tipo: 'FUERA_HORARIO', detalle: `Turno noche ${entrada}-${salida}, marca a las ${log.timestamp.toTimeString().slice(0,5)}` });
         }
       } else {
-        const salidaMin = salida ? salida.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : entradaMin + 480;
+        const salidaMin = salida ? salida.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m)) : entradaMin + duracionDefault;
         const diffEntrada = Math.abs(logMin - entradaMin);
         const diffSalida = Math.abs(logMin - salidaMin);
 
-        if (diffEntrada > 120 && diffSalida > 120) {
+        if (diffEntrada > umbral && diffSalida > umbral) {
           resultados.push({ ...log, tipo: 'FUERA_HORARIO', detalle: `Turno ${entrada}-${salida}, marca a las ${log.timestamp.toTimeString().slice(0,5)}` });
         }
       }
@@ -131,8 +143,8 @@ class ValidacionesService {
         const { rows: logCount } = await db.query(`
           SELECT COUNT(*) AS cnt FROM biometrico_logs_raw
           WHERE biometrico_id::text = (SELECT biometrico_id::text FROM personal WHERE id = $1)
-            AND timestamp >= $2::date + interval '6 hours'
-            AND timestamp < $2::date + interval '30 hours'
+            AND timestamp >= $2::date + (SELECT COALESCE((SELECT valor::integer FROM configuracion_sistema WHERE clave = 'ventana_sin_marcacion_inicio_h'), 6)::text || ' hours')::interval
+            AND timestamp < $2::date + (SELECT COALESCE((SELECT valor::integer FROM configuracion_sistema WHERE clave = 'ventana_sin_marcacion_fin_h'), 30)::text || ' hours')::interval
         `, [emp.personal_id, fechaStr]);
 
         if (parseInt(logCount[0].cnt) === 0) {

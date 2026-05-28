@@ -1,11 +1,14 @@
 const db = require('../config/db');
 const DashboardService = require('../services/dashboardService');
+const ConfiguracionService = require('../services/configuracionService');
 
 class DashboardController {
   static async getStats(req, res) {
     try {
-      const { mes = 4, anio = 2026 } = req.query;
-      const data = await DashboardService.getStats(parseInt(mes), parseInt(anio));
+      const mes = req.query.mes || (await ConfiguracionService.get('dashboard_mes_default', 4));
+      const anio = req.query.anio || (await ConfiguracionService.get('dashboard_anio_default', 2026));
+      const unidad = req.query.unidad || '';
+      const data = await DashboardService.getStats(parseInt(mes), parseInt(anio), unidad);
       res.json(data);
     } catch (error) {
       console.error(error);
@@ -20,14 +23,17 @@ class DashboardController {
         return res.status(400).json({ error: 'personal_id y fecha requeridos' });
       }
 
+      const ventanaAntes = await ConfiguracionService.get('ventana_detalle_diario_antes_h', 12);
+      const ventanaDespues = await ConfiguracionService.get('ventana_detalle_diario_despues_h', 36);
+
       const { rows: logs } = await db.query(`
         SELECT id, timestamp, verificacion_tipo, device_ip
         FROM biometrico_logs_raw
         WHERE biometrico_id::text = (SELECT biometrico_id::text FROM personal WHERE id = $1)
-          AND timestamp >= $2::date - interval '12 hours'
-          AND timestamp < $2::date + interval '36 hours'
+          AND timestamp >= $2::date - interval '1 hour' * $3
+          AND timestamp < $2::date + interval '1 hour' * $4
         ORDER BY timestamp ASC
-      `, [personal_id, fecha]);
+      `, [personal_id, fecha, ventanaAntes, ventanaDespues]);
 
       const { rows: turno } = await db.query(`
         SELECT tp.*, ta.fecha_inicio, ta.fecha_fin

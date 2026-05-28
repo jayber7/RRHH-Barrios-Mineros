@@ -14,6 +14,7 @@ import CorrespondenciaForm from './pages/CorrespondenciaForm';
 import CorrespondenciaDetail from './pages/CorrespondenciaDetail';
 import BandejaPage from './pages/BandejaPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
+import ComunicadosPage from './pages/ComunicadosPage';
 import TurnosPage from './pages/TurnosPage';
 import VacacionesPage from './pages/VacacionesPage';
 import PermisosPage from './pages/PermisosPage';
@@ -112,7 +113,7 @@ function AppContent() {
           <Route path="/permisos" element={<PermisosPage />} />
           <Route path="/certificaciones" element={<CertificadosPage />} />
           <Route path="/notificaciones" element={<NotificacionesPage />} />
-          <Route path="/comunicados" element={<Placeholder title="Comunicados/Memorándums" />} />
+          <Route path="/comunicados" element={<ComunicadosPage />} />
           <Route path="/reemplazos" element={<Placeholder title="Reemplazos" />} />
           <Route path="/reportes" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><ReportesPage /></ProtectedRoute>} />
           <Route path="/correspondencia" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><CorrespondenciaPage /></ProtectedRoute>} />

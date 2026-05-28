@@ -1,33 +1,57 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Users, Clock, AlertTriangle, TrendingUp,
   ArrowUpRight, ArrowDownRight, Briefcase, Moon,
-  Search, X, Calendar, Filter, BarChart3, PieChart as PieChartIcon
+  Search, X, Download
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
+  PieChart, Pie, Cell, Legend, AreaChart, Area,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
-import { API_BASE_URL } from '../config/api';
-
-const meses = [
-  { id: 1, nombre: 'Enero' }, { id: 2, nombre: 'Febrero' }, { id: 3, nombre: 'Marzo' },
-  { id: 4, nombre: 'Abril' }, { id: 5, nombre: 'Mayo' }, { id: 6, nombre: 'Junio' },
-  { id: 7, nombre: 'Julio' }, { id: 8, nombre: 'Agosto' }, { id: 9, nombre: 'Septiembre' },
-  { id: 10, nombre: 'Octubre' }, { id: 11, nombre: 'Noviembre' }, { id: 12, nombre: 'Diciembre' }
-];
+import html2canvas from 'html2canvas';
+import { useAuth } from '../context/AuthContext';
 
 const ESTADO_COLORS = { 1: '#10b981', 2: '#f59e0b', 3: '#3b82f6', 4: '#ef4444', 5: '#8b5cf6', 6: '#f97316', 7: '#e11d48', 8: '#94a3b8', 9: '#64748b' };
 const ESTADO_LABELS = { 1: 'Normal', 2: 'Atraso', 3: 'Justificado', 4: 'Falta', 5: 'Nocturno', 6: 'Sobretiempo', 7: 'Sal. Adelantada', 8: 'Incompleta', 9: 'Sin Marcación' };
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#e11d48'];
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-const Dashboard = () => {
+const RADAR_COLORS = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'];
+
+function StatCard({ title, value, icon, color, subtitle, variacion }) {
+  return (
+    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
+        <div className={`w-8 h-8 ${color} rounded-lg flex items-center justify-center`}>{icon}</div>
+      </div>
+      <div className="flex items-end gap-2">
+        <span className="text-2xl font-black text-slate-800">{typeof value === 'number' ? value.toLocaleString() : value}</span>
+        {variacion && (
+          <span className={`flex items-center gap-0.5 text-xs font-semibold mb-1 ${variacion.tipo === 'subio' ? 'text-rose-500' : variacion.tipo === 'bajo' ? 'text-emerald-500' : 'text-slate-400'}`}>
+            {variacion.tipo === 'subio' ? <ArrowUpRight size={12} /> : variacion.tipo === 'bajo' ? <ArrowDownRight size={12} /> : null}
+            {variacion.variacion}%
+          </span>
+        )}
+      </div>
+      {subtitle && <p className="text-[11px] text-slate-400 mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { authAxios } = useAuth();
+  const api = authAxios();
+  const dashRef = useRef(null);
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alertas, setAlertas] = useState(null);
-  const [filtroMes, setFiltroMes] = useState(4);
+  const [filtroMes, setFiltroMes] = useState(new Date().getMonth() + 1);
   const [filtroAnio, setFiltroAnio] = useState(2026);
+  const [filtroUnidad, setFiltroUnidad] = useState('');
+  const [unidades, setUnidades] = useState([]);
   const [detallePersonal, setDetallePersonal] = useState(null);
   const [detalleFecha, setDetalleFecha] = useState('');
   const [detalleData, setDetalleData] = useState(null);
@@ -39,357 +63,335 @@ const Dashboard = () => {
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/dashboard/stats?mes=${filtroMes}&anio=${filtroAnio}`);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      setStats(await res.json());
+      const params = new URLSearchParams({ mes: filtroMes, anio: filtroAnio });
+      if (filtroUnidad) params.append('unidad', filtroUnidad);
+      const res = await api.get(`/api/dashboard/stats?${params}`);
+      setStats(res.data);
+      if (res.data.distribucionUnidades?.length > 0) {
+        setUnidades(prev => prev.length === 0 ? res.data.distribucionUnidades.map(u => u.label) : prev);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [filtroMes, filtroAnio]);
+  }, [filtroMes, filtroAnio, filtroUnidad]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/personal/contratos-alertas`)
-      .then(res => res.json())
-      .then(data => setAlertas(data))
+    api.get('/api/personal/contratos-alertas')
+      .then(r => setAlertas(r.data))
       .catch(() => {});
   }, []);
-
-  const fetchDetalle = async () => {
-    if (!detallePersonal || !detalleFecha) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/dashboard/detalle-diario?personal_id=${detallePersonal}&fecha=${detalleFecha}`);
-      setDetalleData(await res.json());
-    } catch (e) {
-      alert('Error al cargar detalle');
-    }
-  };
 
   const searchPersonal = async (term) => {
     if (term.length < 2) { setSearchResults([]); return; }
     try {
-      const res = await fetch(`${API_BASE_URL}/api/personal?buscar=${encodeURIComponent(term)}&limit=10`);
-      const data = await res.json();
-      setSearchResults(data.data || data || []);
-    } catch (e) { setSearchResults([]); }
+      const res = await api.get(`/api/personal?buscar=${encodeURIComponent(term)}&limit=10`);
+      setSearchResults(res.data?.data || []);
+    } catch { setSearchResults([]); }
   };
 
-  const formatDateShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-BO', { day: '2-digit', month: 'short' }) : '';
+  const fetchDetalle = async () => {
+    if (!detallePersonal || !detalleFecha) return;
+    try {
+      const res = await api.get(`/api/dashboard/detalle-diario?personal_id=${detallePersonal}&fecha=${detalleFecha}`);
+      setDetalleData(res.data);
+    } catch { setDetalleData(null); }
+  };
 
-  if (loading && !stats) return <div className="p-8 flex items-center justify-center min-h-screen"><div className="text-slate-500 text-lg">Cargando dashboard...</div></div>;
-  if (error) return <div className="p-8 bg-slate-50 min-h-screen"><div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700"><h3 className="font-bold">Error</h3><p className="text-sm">{error}</p></div></div>;
-  if (!stats) return null;
+  const exportarPNG = () => {
+    if (dashRef.current) {
+      html2canvas(dashRef.current, { backgroundColor: '#f8fafc', scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `dashboard_${MESES[filtroMes - 1]}_${filtroAnio}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  };
+
+  if (loading && !stats) return <div className="p-8 flex items-center justify-center h-64"><div className="text-slate-400 text-lg">Cargando dashboard...</div></div>;
+  if (error && !stats) return <div className="p-8 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
+    <div className="p-6 bg-slate-50 min-h-screen" ref={dashRef}>
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-800">Panel de Control</h1>
-          <p className="text-slate-500 text-sm">Hospital de Segundo Nivel "Barrios Mineros"</p>
+          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Dashboard Estratégico</h1>
+          <p className="text-slate-500 text-sm">Resumen de indicadores de gestión</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-            <Calendar size={16} className="text-slate-400" />
-            <select value={filtroMes} onChange={e => setFiltroMes(parseInt(e.target.value))}
-              className="text-sm font-bold text-slate-700 bg-transparent outline-none">
-              {meses.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-            </select>
-            <input type="number" value={filtroAnio} onChange={e => setFiltroAnio(parseInt(e.target.value))}
-              className="w-16 text-sm font-bold text-slate-700 bg-transparent outline-none" />
-          </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <select value={filtroUnidad} onChange={e => setFiltroUnidad(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todas las unidades</option>
+            {unidades.map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+          <select value={filtroMes} onChange={e => setFiltroMes(Number(e.target.value))}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+            {MESES.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+          </select>
+          <select value={filtroAnio} onChange={e => setFiltroAnio(Number(e.target.value))}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+            {[2025, 2026, 2027].map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+          <button onClick={exportarPNG}
+            className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
+            <Download size={15} /> Exportar
+          </button>
           <button onClick={() => setShowSearch(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-sm text-sm font-bold">
-            <Search size={14} /> Buscar Empleado
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-1.5">
+            <Search size={15} /> Buscar
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-        <StatCard title="Personal Total" value={stats.totales.personal} icon={<Users size={18} />} color="blue" />
-        <StatCard title="Horas en el Mes" value={stats.totales.horas} icon={<Clock size={18} />} color="emerald" />
-        <StatCard title="Atrasos (min)" value={stats.totales.atrasos} icon={<AlertTriangle size={18} />} color="rose" />
-        <StatCard title="Nocturnos" value={stats.totales.nocturnos} icon={<Moon size={18} />} color="purple" icon2={<span className="text-[10px] ml-1">{stats.totales.dias_nocturnos}d</span>} />
-        <StatCard title="Sin Marcación" value={(stats.distribucionEstados?.find(e => e.estado === 9)?.total || 0)} icon={<AlertTriangle size={18} />} color="slate" />
-        <StatCard title="Incompletas" value={(stats.distribucionEstados?.find(e => e.estado === 8)?.total || 0)} icon={<AlertTriangle size={18} />} color="amber" />
-      </div>
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+            <StatCard title="Personal Total" value={stats.totales.personal} icon={<Users size={16} className="text-white" />} color="bg-blue-500" />
+            <StatCard title="Horas en el Mes" value={stats.totales.horas} icon={<Clock size={16} className="text-white" />} color="bg-emerald-500"
+              variacion={stats.comparativo?.horas} subtitle="vs mes anterior" />
+            <StatCard title="Atrasos (min)" value={stats.totales.atrasos} icon={<AlertTriangle size={16} className="text-white" />} color="bg-rose-500"
+              variacion={stats.comparativo?.atrasos} subtitle="vs mes anterior" />
+            <StatCard title="Nocturnos" value={stats.totales.nocturnos} icon={<Moon size={16} className="text-white" />} color="bg-purple-500"
+              subtitle={`${stats.totales.dias_nocturnos} días`} />
+            <StatCard title="Ausentismo" value={`${stats.totales.tasa_ausentismo}%`} icon={<TrendingUp size={16} className="text-white" />} color="bg-amber-500"
+              variacion={stats.comparativo?.faltas} subtitle="Faltas + SM vs total" />
+            <StatCard title="Sin Marcación" value={stats.distribucionEstados?.find(e => e.estado === 9)?.total || 0}
+              icon={<AlertTriangle size={16} className="text-white" />} color="bg-slate-500" />
+          </div>
 
-      {/* Contract alerts */}
-      {alertas?.stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-red-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg"><span className="text-red-600 font-black text-lg">{alertas.stats.vencidosCount}</span></div>
-              <div className="text-xs text-red-500 font-medium">Contratos Vencidos</div>
+          {alertas && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+              {[
+                { label: 'Contratos Vencidos', value: alertas.stats.vencidosCount, color: 'border-red-400', icon: '🔴' },
+                { label: 'Por Vencer (30d)', value: alertas.stats.porVencerCount, color: 'border-amber-400', icon: '🟡' },
+                { label: `Activos / ${alertas.stats.inactivos} Inactivos`, value: alertas.stats.activos, color: 'border-slate-300', icon: '🟢' },
+              ].map((item, i) => (
+                <div key={i} className={`bg-white p-4 rounded-xl border-l-4 ${item.color} border border-slate-200 shadow-sm`}>
+                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="text-xl font-black text-slate-800 mt-1">{item.value}</p>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-amber-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg"><span className="text-amber-600 font-black text-lg">{alertas.stats.porVencerCount}</span></div>
-              <div className="text-xs text-amber-500 font-medium">Por Vencer (30d)</div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 rounded-lg"><span className="text-slate-600 font-black text-lg">{alertas.stats.activos}</span></div>
-              <div className="text-xs text-slate-500 font-medium">Activos / {alertas.stats.inactivos} Inactivos</div>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* State Distribution */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><PieChartIcon size={16} /> Distribución de Estados</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={stats.distribucionEstados} cx="50%" cy="50%" innerRadius={50} outerRadius={85}
-                  paddingAngle={3} dataKey="total" nameKey="label">
-                  {stats.distribucionEstados.map((e) => (
-                    <Cell key={e.estado} fill={ESTADO_COLORS[e.estado] || '#94a3b8'} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Distribución de Estados</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={stats.distribucionEstados} dataKey="total" nameKey="label" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                    {stats.distribucionEstados.map((entry) => (
+                      <Cell key={entry.estado} fill={ESTADO_COLORS[entry.estado] || '#94a3b8'} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Personal por Unidad/Servicio</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={stats.distribucionUnidades?.slice(0, 12) || []} layout="vertical" margin={{ left: 120 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis type="category" dataKey="label" width={120} tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" barSize={16} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Tendencia Mensual</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={stats.tendencia}>
+                  <defs>
+                    <linearGradient id="colorHoras" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="colorAtrasos" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/><stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/></linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="mes" tickFormatter={(m) => MESES[m - 1]?.substring(0, 3) || m} tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+                  <Tooltip labelFormatter={(m) => MESES[m - 1] || m} />
+                  <Area yAxisId="left" type="monotone" dataKey="total_horas" stroke="#3b82f6" fill="url(#colorHoras)" strokeWidth={2} name="Horas" />
+                  <Area yAxisId="right" type="monotone" dataKey="total_atrasos" stroke="#f59e0b" fill="url(#colorAtrasos)" strokeWidth={2} name="Atrasos (min)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Comparativo por Unidad</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <RadarChart data={stats.radarUnidad || []}>
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="unidad" tick={{ fontSize: 9 }} />
+                  <PolarRadiusAxis tick={{ fontSize: 9 }} />
+                  {['atrasos', 'faltas', 'nocturnos'].map((key, i) => (
+                    <Radar key={key} name={key.charAt(0).toUpperCase() + key.slice(1)} dataKey={key} stroke={RADAR_COLORS[i]} fill={RADAR_COLORS[i]} fillOpacity={0.15} strokeWidth={2} />
                   ))}
-                </Pie>
-                <Tooltip formatter={(v, n) => [v, n]} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+                  <Legend wrapperStyle={{ fontSize: '10px' }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
 
-        {/* Unit Distribution */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><BarChart3 size={16} /> Personal por Unidad/Servicio</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.distribucionUnidades?.slice(0, 12) || []} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                <YAxis dataKey="label" type="category" width={120} axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 11 }} />
-                <Tooltip cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Monthly Trend */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><TrendingUp size={16} /> Tendencia Mensual</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={(stats.tendencia || []).map(t => ({ ...t, mesLabel: meses[t.mes - 1]?.nombre?.substring(0, 3) || t.mes }))}>
-                <defs>
-                  <linearGradient id="colorHoras" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
-                  <linearGradient id="colorAtrasos" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1} /><stop offset="95%" stopColor="#f59e0b" stopOpacity={0} /></linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="mesLabel" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                <Tooltip />
-                <Area yAxisId="left" type="monotone" dataKey="total_horas" stroke="#3b82f6" fill="url(#colorHoras)" strokeWidth={2} name="Horas" />
-                <Area yAxisId="right" type="monotone" dataKey="total_atrasos" stroke="#f59e0b" fill="url(#colorAtrasos)" strokeWidth={2} name="Atrasos (min)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Top Atrasos & Planilla breakdown */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><AlertTriangle size={16} /> Ranking de Atrasos</h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {stats.topAtrasos.map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 cursor-pointer"
-                onClick={() => { setDetallePersonal(item.id); setDetalleFecha(`2026-${String(filtroMes).padStart(2, '0')}-01`); setShowDetalle(true); }}>
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 bg-white text-blue-600 rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm shrink-0">{i + 1}</div>
-                  <div className="truncate">
-                    <div className="font-bold text-slate-700 text-xs truncate">{item.primer_nombre} {item.apellido_paterno}</div>
-                    <div className="text-[9px] text-slate-400 font-medium truncate">{item.unidad_servicio || ''} {item.cargo_actual ? `- ${item.cargo_actual}` : ''}</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Ranking de Atrasos</h3>
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {stats.topAtrasos?.length === 0 && <p className="text-sm text-slate-400 text-center py-8">Sin atrasos este mes</p>}
+                {stats.topAtrasos?.map((emp, i) => (
+                  <div key={emp.id} onClick={() => { setDetallePersonal(emp.id); setDetalleFecha(''); setDetalleData(null); setShowDetalle(true); }}
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                    <span className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${i < 3 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700 truncate">{emp.nombre_completo}</p>
+                      <p className="text-xs text-slate-400 truncate">{emp.unidad_servicio || emp.cargo_actual}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-rose-500">{emp.total_atrasos_min}'</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${emp.tipo_planilla === 'RESIDENTE' ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-600'}`}>{emp.tipo_planilla}</span>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 mb-3">Ranking de Faltas</h3>
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {stats.topFaltas?.length === 0 && <p className="text-sm text-slate-400 text-center py-8">Sin faltas este mes</p>}
+                {stats.topFaltas?.map((emp, i) => (
+                  <div key={emp.id} onClick={() => { setDetallePersonal(emp.id); setDetalleFecha(''); setDetalleData(null); setShowDetalle(true); }}
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                    <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700 truncate">{emp.nombre_completo}</p>
+                      <p className="text-xs text-slate-400 truncate">{emp.unidad_servicio}</p>
+                    </div>
+                    <p className="text-sm font-bold text-red-500">{emp.total_faltas} faltas</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {stats.asistenciaPorPlanilla?.map((p, i) => (
+              <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div className={`w-10 h-10 ${p.tipo_planilla === 'RESIDENTE' ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-600'} rounded-xl flex items-center justify-center mb-3`}>
+                  <Briefcase size={18} />
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{item.tipo_planilla}</span>
-                  <span className="text-rose-600 font-black text-sm">{item.total_atrasos_min}m</span>
-                </div>
+                <p className="text-sm font-bold text-slate-700">{p.tipo_planilla || 'SIN PLANILLA'}</p>
+                <p className="text-xs text-slate-400 mt-1">Total horas: <span className="font-bold text-slate-600">{Math.round(p.total_horas_mes || 0)}</span></p>
+                <p className="text-xs text-slate-400">Atrasos: <span className="font-bold text-rose-500">{p.total_atrasos_mes || 0} min</span></p>
               </div>
             ))}
-            {stats.topAtrasos.length === 0 && <div className="text-slate-400 text-sm text-center py-8">Sin atrasos este mes</div>}
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Planilla Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {stats.asistenciaPorPlanilla?.map(p => (
-          <div key={p.tipo_planilla} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`p-1.5 rounded-lg ${p.tipo_planilla === 'RESIDENTE' ? 'bg-purple-50' : 'bg-emerald-50'}`}>
-                <Briefcase size={16} className={p.tipo_planilla === 'RESIDENTE' ? 'text-purple-600' : 'text-emerald-600'} />
-              </div>
-              <span className="text-sm font-bold text-slate-700">{p.tipo_planilla}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-lg font-black text-slate-800">{Math.round(p.total_horas_mes || 0)}</div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">Horas</div>
-              </div>
-              <div>
-                <div className="text-lg font-black text-rose-600">{p.total_atrasos_mes || 0}</div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">Min. Atraso</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Buscador Modal */}
       {showSearch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-          onClick={() => { setShowSearch(false); setSearchResults([]); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800">Buscar Empleado</h3>
-              <button onClick={() => { setShowSearch(false); setSearchResults([]); }} className="p-1 hover:bg-slate-100 rounded-lg"><X size={18} className="text-slate-400" /></button>
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-start justify-center pt-20" onClick={() => setShowSearch(false)}>
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-100" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+              <Search size={18} className="text-slate-400" />
+              <input autoFocus type="text" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); searchPersonal(e.target.value); }}
+                placeholder="Buscar empleado por nombre o CI..." className="flex-1 outline-none text-sm" />
+              <button onClick={() => setShowSearch(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
-            <input type="text" placeholder="Nombre o C.I..." value={searchTerm}
-              onChange={e => { setSearchTerm(e.target.value); searchPersonal(e.target.value); }}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 mb-3" autoFocus />
-            <div className="max-h-60 overflow-y-auto space-y-1">
-              {(Array.isArray(searchResults) ? searchResults : []).map(p => (
-                <button key={p.id} onClick={() => {
-                  setDetallePersonal(p.id);
-                  setDetalleFecha(`2026-${String(filtroMes).padStart(2, '0')}-01`);
-                  setShowDetalle(true);
-                  setShowSearch(false);
-                  setSearchTerm('');
-                  setSearchResults([]);
-                }}
-                  className="w-full text-left p-3 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">
-                    {(p.primer_nombre?.[0] || '') + (p.apellido_paterno?.[0] || '')}
+            <div className="max-h-80 overflow-y-auto p-2">
+              {searchResults.map(p => (
+                <div key={p.id} onClick={() => { setDetallePersonal(p.id); setDetalleFecha(''); setDetalleData(null); setShowDetalle(true); setShowSearch(false); }}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                    {p.primer_nombre?.[0]}{p.apellido_paterno?.[0]}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-700 text-sm">{p.primer_nombre} {p.apellido_paterno}</div>
-                    <div className="text-[10px] text-slate-400">{p.ci}</div>
+                    <p className="text-sm font-bold text-slate-700">{p.primer_nombre} {p.apellido_paterno} {p.apellido_materno || ''}</p>
+                    <p className="text-xs text-slate-400">CI: {p.ci}</p>
                   </div>
-                </button>
+                </div>
               ))}
-              {searchTerm.length >= 2 && searchResults.length === 0 && <div className="text-slate-400 text-sm text-center py-4">Sin resultados</div>}
+              {searchTerm.length >= 2 && searchResults.length === 0 && <p className="text-sm text-slate-400 text-center py-6">Sin resultados</p>}
             </div>
           </div>
         </div>
       )}
 
-      {/* Detalle Diario Modal */}
       {showDetalle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-          onClick={() => { setShowDetalle(false); setDetalleData(null); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
-              <h3 className="font-bold text-slate-800">Detalle Diario</h3>
-              <button onClick={() => { setShowDetalle(false); setDetalleData(null); }}
-                className="p-1 hover:bg-slate-100 rounded-lg"><X size={18} className="text-slate-400" /></button>
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowDetalle(false)}>
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-100 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-800">Detalle Diario</h3>
+              <div className="flex items-center gap-2">
+                <input type="date" value={detalleFecha} onChange={e => setDetalleFecha(e.target.value)} className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm" />
+                <button onClick={fetchDetalle} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Consultar</button>
+                <button onClick={() => setShowDetalle(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+              </div>
             </div>
-            <div className="p-6">
-              {!detalleData ? (
-                <div className="space-y-4">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Seleccionar Fecha</label>
+            {detalleData && (
+              <div className="p-6 space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-base font-bold text-slate-800">{detalleData.personal?.primer_nombre} {detalleData.personal?.apellido_paterno}</p>
+                  <p className="text-sm text-slate-500">CI: {detalleData.personal?.ci} | {detalleData.personal?.cargo_actual} | {detalleData.personal?.unidad_servicio}</p>
+                </div>
+                {detalleData.horario && (
                   <div className="flex gap-3">
-                    <input type="date" value={detalleFecha}
-                      onChange={e => setDetalleFecha(e.target.value)}
-                      className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-                    <button onClick={fetchDetalle}
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold">
-                      <Search size={16} />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="bg-slate-50 p-4 rounded-xl">
-                    <div className="font-bold text-slate-800 text-lg">{detalleData.personal?.primer_nombre} {detalleData.personal?.apellido_paterno}</div>
-                    <div className="text-xs text-slate-500">CI: {detalleData.personal?.ci} | {detalleData.personal?.cargo_actual} | {detalleData.personal?.unidad_servicio}</div>
-                  </div>
-                  {detalleData.horario && (
-                    <div className="flex gap-4">
-                      <div className="flex-1 bg-blue-50 p-3 rounded-xl text-center">
-                        <div className="text-[10px] text-blue-500 font-bold uppercase">Horario</div>
-                        <div className="font-bold text-blue-700">{detalleData.horario.entrada?.substring(0, 5)} - {detalleData.horario.salida?.substring(0, 5)}</div>
-                        {detalleData.horario.nocturno && <span className="text-[10px] bg-purple-200 text-purple-700 px-2 py-0.5 rounded-full font-bold">NOCTURNO</span>}
-                      </div>
-                      <div className="flex-1 bg-amber-50 p-3 rounded-xl text-center">
-                        <div className="text-[10px] text-amber-500 font-bold uppercase">Estado BD</div>
-                        <div className="font-bold text-amber-700">{ESTADO_LABELS[detalleData.diario?.estado] || '-'}</div>
-                        {detalleData.diario?.minutos_atraso > 0 && <div className="text-xs text-rose-600 font-bold">{detalleData.diario.minutos_atraso} min atraso</div>}
-                      </div>
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl text-center">
+                      <p className="text-xs text-slate-400">Entrada</p>
+                      <p className="text-lg font-bold text-slate-700">{detalleData.horario.entrada || '-'}</p>
                     </div>
-                  )}
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl text-center">
+                      <p className="text-xs text-slate-400">Salida</p>
+                      <p className="text-lg font-bold text-slate-700">{detalleData.horario.salida || '-'}</p>
+                    </div>
+                    {detalleData.horario.nocturno && <div className="flex-1 bg-purple-50 p-3 rounded-xl text-center"><p className="text-xs text-purple-400">Turno</p><p className="text-lg font-bold text-purple-600">Nocturno</p></div>}
+                  </div>
+                )}
+                {detalleData.diario && (
+                  <div className="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-400">Estado BD</p>
+                      <p className="text-sm font-bold text-slate-700">{ESTADO_LABELS[detalleData.diario.estado] || 'Desconocido'}</p>
+                    </div>
+                    {detalleData.diario.minutos_atraso > 0 && <p className="text-sm font-bold text-rose-500">{detalleData.diario.minutos_atraso} min atraso</p>}
+                  </div>
+                )}
+                {detalleData.logs?.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Marcaciones Biométricas</h4>
-                    {detalleData.logs?.length > 0 ? (
-                      <div className="space-y-1">
-                        {detalleData.logs.map((log, i) => (
-                          <div key={log.id} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-green-100 text-green-600' : i === detalleData.logs.length - 1 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
-                                #{i + 1}
-                              </div>
-                              <span className="font-bold text-slate-700">{new Date(log.timestamp).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <div className="text-xs text-slate-400">{log.verificacion_tipo || '-'}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-slate-400 text-sm text-center py-8 bg-slate-50 rounded-xl">Sin marcas biométricas</div>
-                    )}
-                  </div>
-                  {detalleData.diario?.justificacion_tipo && (
-                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                      <div className="text-[10px] text-blue-500 font-bold uppercase">Justificación</div>
-                      <div className="text-sm text-blue-700">{detalleData.diario.justificacion_tipo}: {detalleData.diario.motivo_justificacion || detalleData.diario.motivo_detalle}</div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Marcaciones Biométricas</p>
+                    <div className="space-y-1">
+                      {detalleData.logs.map((log, i) => (
+                        <div key={log.id} className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg">
+                          <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                          <span className="text-sm font-mono">{new Date(log.timestamp).toLocaleString('es-BO')}</span>
+                          <span className="text-xs text-slate-400">{log.verificacion_tipo}</span>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+                {detalleData.diario?.justificacion_tipo && (
+                  <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                    <p className="text-xs font-bold text-blue-600">Justificación: {detalleData.diario.justificacion_tipo}</p>
+                    <p className="text-sm text-slate-600 mt-1">{detalleData.diario.motivo_detalle || detalleData.diario.motivo_justificacion}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
-};
-
-const StatCard = ({ title, value, icon, color, icon2 }) => {
-  const colors = {
-    blue: 'bg-blue-50 text-blue-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    rose: 'bg-rose-50 text-rose-600',
-    purple: 'bg-purple-50 text-purple-600',
-    amber: 'bg-amber-50 text-amber-600',
-    slate: 'bg-slate-50 text-slate-600',
-  };
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-      <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg ${colors[color] || colors.blue}`}>{icon}</div>
-        {icon2}
-      </div>
-      <div className="text-xl font-black text-slate-800">{value}</div>
-      <div className="text-[10px] text-slate-400 font-bold uppercase">{title}</div>
-    </div>
-  );
-};
-
-export default Dashboard;
+}

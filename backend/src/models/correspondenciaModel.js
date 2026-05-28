@@ -52,7 +52,7 @@ class CorrespondenciaModel {
       params.push(`%${filters.busqueda}%`);
       query += ` AND (
         c.referencia ILIKE $${params.length} OR
-        c.hr_completo ILIKE $${params.length} OR
+        CAST(c.hr_correlativo AS TEXT) ILIKE $${params.length} OR
         c.cite ILIKE $${params.length} OR
         c.remitente_externo ILIKE $${params.length}
       )`;

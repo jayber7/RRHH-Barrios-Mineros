@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const ConfiguracionService = require('./configuracionService');
 
 class TurnosService {
   static async getAllPlantillas(activo) {
@@ -19,6 +20,13 @@ class TurnosService {
   }
 
   static async createPlantilla(data) {
+    const defaults = {
+      tolerancia_atraso: await ConfiguracionService.get('tolerancia_atraso_default', 5),
+      tolerancia_falta: await ConfiguracionService.get('tolerancia_falta_default', 60),
+      salida_adelantada: await ConfiguracionService.get('salida_adelantada_default', 0),
+      puntualidad: await ConfiguracionService.get('puntualidad_default', 60),
+      max_extra: await ConfiguracionService.get('max_extra_default', 180),
+    };
     const { rows } = await db.query(`
       INSERT INTO turnos_plantilla (
         codigo, nombre,
@@ -47,8 +55,11 @@ class TurnosService {
       data.jueves_habilitado, data.viernes_habilitado, data.sabado_habilitado, data.domingo_habilitado,
       data.nocturno_lunes, data.nocturno_martes, data.nocturno_miercoles, data.nocturno_jueves,
       data.nocturno_viernes, data.nocturno_sabado, data.nocturno_domingo,
-      data.tolerancia_atraso || 5, data.tolerancia_falta || 60,
-      data.salida_adelantada || 0, data.puntualidad || 60, data.max_extra || 180,
+      data.tolerancia_atraso || defaults.tolerancia_atraso,
+      data.tolerancia_falta || defaults.tolerancia_falta,
+      data.salida_adelantada || defaults.salida_adelantada,
+      data.puntualidad || defaults.puntualidad,
+      data.max_extra || defaults.max_extra,
       data.prioridad || 'Normal'
     ]);
     return rows[0];

@@ -50,6 +50,15 @@ psql -h <EXTERNAL_HOST> -U <RENDER_USER> -d <RENDER_DB> < rrhh_dump_20260527.sql
 | `permisos_laborales` | 2,909 | Permisos/Licencias históricos ASIS |
 | `certificados` | 0 | Certificados generados |
 | `notificaciones` | 0 | Notificaciones del sistema |
+| `configuracion_sistema` | 24 | Parámetros configurables del sistema |
+| `cat_tipos_correspondencia` | 4 | Tipos de correspondencia (+ COM para Comunicados) |
+| `cat_clasificaciones` | 8 | Clasificaciones (incluye MEM para Memorándum) |
+| `cat_etiquetas` | 8 | Etiquetas para correspondencia y comunicados |
+| `correspondencia` | 0 | Registro central de correspondencia |
+| `derivaciones` | 0 | Derivaciones y bandeja de entrada |
+| `comunicados_distribucion` | 0 | Distribución de comunicados por empleado |
+| `configuracion_cite` | 1 | Formato de numeración CITE |
+| `cat_tipos_permisos` | 21 | Tipos de permiso/licencia |
 | `usuarios` | 1 | Usuarios del sistema (admin) |
 
 ### 1.4 Verificar la importación
@@ -66,7 +75,10 @@ UNION ALL SELECT 'justificaciones', COUNT(*) FROM justificaciones
 UNION ALL SELECT 'permisos_laborales', COUNT(*) FROM permisos_laborales
 UNION ALL SELECT 'vacaciones', COUNT(*) FROM vacaciones
 UNION ALL SELECT 'certificados', COUNT(*) FROM certificados
-UNION ALL SELECT 'notificaciones', COUNT(*) FROM notificaciones;
+UNION ALL SELECT 'notificaciones', COUNT(*) FROM notificaciones
+UNION ALL SELECT 'correspondencia', COUNT(*) FROM correspondencia
+UNION ALL SELECT 'comunicados_distribucion', COUNT(*) FROM comunicados_distribucion
+UNION ALL SELECT 'configuracion_sistema', COUNT(*) FROM configuracion_sistema;
 "
 ```
 
@@ -133,12 +145,14 @@ VITE_API_BASE_URL=https://rrhh-barrios-mineros-api.onrender.com
 - [ ] Asistencias: filtros por mes/año/tipo funcionan
 - [ ] Turnos: plantillas, asignaciones, calendario
 - [ ] Justificaciones: listado y creación
-- [ ] Dashboard: KPIs, gráficos, detalle diario
+- [ ] Dashboard: KPIs estratégicos, comparativo, radar, ranking faltas, exportar PNG
 - [ ] Reportes: descarga de Excel
 - [ ] Biométrico: configuración y raw logs
 - [ ] Validaciones: reglas e importación manual
 - [ ] Vacaciones: solicitud, aprobación, saldo
 - [ ] Permisos: listado, filtros, aprobación
+- [ ] Configuración: parámetros de asistencia, tipos de permiso, generales
+- [ ] Comunicados: listado, crear, distribución, PDF, marcar leído
 - [ ] Certificados: generación y descarga PDF
 - [ ] Notificaciones: badge y dropdown
 

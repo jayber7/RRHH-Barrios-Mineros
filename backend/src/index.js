@@ -19,6 +19,8 @@ const vacacionesRoutes = require('./routes/vacacionesRoutes');
 const permisosRoutes = require('./routes/permisosRoutes');
 const certificadosRoutes = require('./routes/certificadosRoutes');
 const notificacionesRoutes = require('./routes/notificacionesRoutes');
+const configuracionRoutes = require('./routes/configuracionRoutes');
+const comunicadosRoutes = require('./routes/comunicadosRoutes');
 const { startEstadoJob } = require('./cron/estadoJob');
 const { startCalculoDiarioJob } = require('./cron/calculoDiarioJob');
 
@@ -47,6 +49,8 @@ app.use('/api/vacaciones', vacacionesRoutes);
 app.use('/api/permisos', permisosRoutes);
 app.use('/api/certificados', certificadosRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/comunicados', comunicadosRoutes);
 
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');
