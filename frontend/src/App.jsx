@@ -15,6 +15,10 @@ import CorrespondenciaDetail from './pages/CorrespondenciaDetail';
 import BandejaPage from './pages/BandejaPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
 import TurnosPage from './pages/TurnosPage';
+import VacacionesPage from './pages/VacacionesPage';
+import PermisosPage from './pages/PermisosPage';
+import CertificadosPage from './pages/CertificadosPage';
+import NotificacionesPage from './pages/NotificacionesPage';
 import SancionesConfig from './components/SancionesConfig';
 
 const Placeholder = ({ title }) => (
@@ -104,9 +108,10 @@ function AppContent() {
           <Route path="/asistencias" element={<AsistenciasPage />} />
           <Route path="/biometrico" element={<BiometricoPage />} />
           <Route path="/turnos" element={<TurnosPage />} />
-          <Route path="/vacaciones" element={<Placeholder title="Vacaciones" />} />
-          <Route path="/permisos" element={<Placeholder title="Permisos" />} />
-          <Route path="/certificaciones" element={<Placeholder title="Certificaciones" />} />
+          <Route path="/vacaciones" element={<VacacionesPage />} />
+          <Route path="/permisos" element={<PermisosPage />} />
+          <Route path="/certificaciones" element={<CertificadosPage />} />
+          <Route path="/notificaciones" element={<NotificacionesPage />} />
           <Route path="/comunicados" element={<Placeholder title="Comunicados/Memorándums" />} />
           <Route path="/reemplazos" element={<Placeholder title="Reemplazos" />} />
           <Route path="/reportes" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><ReportesPage /></ProtectedRoute>} />

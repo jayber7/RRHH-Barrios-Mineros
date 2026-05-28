@@ -95,7 +95,7 @@ class SancionesService {
     )).rows[0] || null;
 
     const haber = (await db.query(`
-      SELECT vl.haber FROM vinculos_laborales vl WHERE vl.personal_id = $1 LIMIT 1
+      SELECT haber_basico FROM contratos WHERE personal_id = $1 ORDER BY fecha_inicio DESC NULLS LAST LIMIT 1
     `, [personalId])).rows[0];
 
     const calcularMonto = (sancion, haberBase) => {

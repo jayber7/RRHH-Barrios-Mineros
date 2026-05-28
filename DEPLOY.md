@@ -5,7 +5,7 @@
 ### 1.1 Exportar BD local (con todos los datos migrados)
 
 ```bash
-# Dump completo (schema + data, ~50-100 MB comprimido)
+# Dump completo (schema + data, ~2.5 MB comprimido)
 pg_dump -h /var/run/postgresql -U hitdev -d rrhh_barrios_mineros \
   --no-owner --no-acl -Fc > rrhh_dump_20260527.dump
 
@@ -17,7 +17,7 @@ pg_dump -h /var/run/postgresql -U hitdev -d rrhh_barrios_mineros \
 ### 1.2 Crear BD en Render
 
 1. Desde el Dashboard de Render: **New → PostgreSQL**
-2. Plan: Starter ($7/mo) — suficiente para ~300 empleados
+2. Plan: Starter ($7/mo) — suficiente para ~300 empleados y ~300K registros
 3. Anotar los valores de:
    - `RENDER_DATABASE_URL` (internal connection string)
    - `RENDER_DATABASE_URL_EXTERNAL` (external, para pg_restore)
@@ -33,9 +33,24 @@ pg_restore -h <EXTERNAL_HOST> -U <RENDER_USER> -d <RENDER_DB> \
 psql -h <EXTERNAL_HOST> -U <RENDER_USER> -d <RENDER_DB> < rrhh_dump_20260527.sql
 ```
 
-**Nota:** El dump incluye todas las tablas, secuencias, índices, constraints y datos migrados:
-- 267 personal, 4,400+ asistencia_mensual, 133,000+ asistencia_diaria
-- 108,989 biometrico_logs_raw, 23,851 turnos_asignados, 1,676 justificaciones
+**Nota:** El dump incluye todas las tablas creadas hasta la Fase 4:
+
+| Tabla | Registros | Descripción |
+|-------|-----------|-------------|
+| `personal` | 267 | Empleados activos |
+| `vinculos_laborales` | 244 | Vínculos laborales |
+| `contratos` | 94 | Contratos con haber básico |
+| `asistencia_mensual` | 4,629 | Resúmenes mensuales |
+| `asistencia_diaria` | 140,763 | Registros diarios |
+| `justificaciones` | 1,676 | Justificaciones |
+| `biometrico_logs_raw` | 108,991 | Marcaciones biométricas |
+| `turnos_plantilla` | 87 | Plantillas de turno |
+| `turnos_asignados` | 23,851 | Asignaciones de turno |
+| `vacaciones` | 0 | Solicitudes de vacaciones (nuevas) |
+| `permisos_laborales` | 2,909 | Permisos/Licencias históricos ASIS |
+| `certificados` | 0 | Certificados generados |
+| `notificaciones` | 0 | Notificaciones del sistema |
+| `usuarios` | 1 | Usuarios del sistema (admin) |
 
 ### 1.4 Verificar la importación
 
@@ -47,7 +62,11 @@ UNION ALL SELECT 'asistencia_diaria', COUNT(*) FROM asistencia_diaria
 UNION ALL SELECT 'biometrico_logs_raw', COUNT(*) FROM biometrico_logs_raw
 UNION ALL SELECT 'turnos_plantilla', COUNT(*) FROM turnos_plantilla
 UNION ALL SELECT 'turnos_asignados', COUNT(*) FROM turnos_asignados
-UNION ALL SELECT 'justificaciones', COUNT(*) FROM justificaciones;
+UNION ALL SELECT 'justificaciones', COUNT(*) FROM justificaciones
+UNION ALL SELECT 'permisos_laborales', COUNT(*) FROM permisos_laborales
+UNION ALL SELECT 'vacaciones', COUNT(*) FROM vacaciones
+UNION ALL SELECT 'certificados', COUNT(*) FROM certificados
+UNION ALL SELECT 'notificaciones', COUNT(*) FROM notificaciones;
 "
 ```
 
@@ -112,10 +131,16 @@ VITE_API_BASE_URL=https://rrhh-barrios-mineros-api.onrender.com
 - [ ] Login funciona (admin/admin)
 - [ ] Listado de personal carga correctamente
 - [ ] Asistencias: filtros por mes/año/tipo funcionan
-- [ ] Asistencias: "Calcular Estados" procesa sin errores
 - [ ] Turnos: plantillas, asignaciones, calendario
 - [ ] Justificaciones: listado y creación
-- [ ] Dashboard: KPIs cargan
+- [ ] Dashboard: KPIs, gráficos, detalle diario
+- [ ] Reportes: descarga de Excel
+- [ ] Biométrico: configuración y raw logs
+- [ ] Validaciones: reglas e importación manual
+- [ ] Vacaciones: solicitud, aprobación, saldo
+- [ ] Permisos: listado, filtros, aprobación
+- [ ] Certificados: generación y descarga PDF
+- [ ] Notificaciones: badge y dropdown
 
 ### Comandos de verificación rápida
 
@@ -151,3 +176,4 @@ Si algo sale mal:
   - Mantener un agente local que sincronice marcaciones a la BD en Render
   - O mantener la BD local para el módulo biométrico
 - **Archivos estáticos:** Las imágenes de empleados y archivos Excel no se migran automáticamente. Usar almacenamiento externo (Cloudinary/S3) para producción.
+- **Dump generado:** `Statefolder/rrhh_dump_20260527.dump` (2.5 MB comprimido, custom format)

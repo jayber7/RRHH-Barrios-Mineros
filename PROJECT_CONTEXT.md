@@ -15,20 +15,28 @@
 | Personal | ✅ Completo | 267 registros, 114 con biometrico_id |
 | Vínculos Laborales | ✅ Completo | Cargos, unidades, servicios |
 | Turnos | ✅ Completo | 87 plantillas, 23,851 asignaciones (2023-2026) |
-| Asistencia | ✅ Parcial | 2024-2026 calculados, 2022-2023 pendientes |
-| Marcaciones | ✅ Completo | 108,989 logs biométricos importados |
+| Asistencia | ✅ Completo | 2024-2026 calculados + motor nocturno |
+| Marcaciones | ✅ Completo | 108,989 logs biométricos importados + sync ZKTeco |
 | Justificaciones | ✅ Completo | 1,676 registros importados desde ASIS |
-| Sanciones | 🔧 Pendiente | Lógica implementada, requiere UI |
-| Vacaciones | ❌ Pendiente | Tablas listas, sin datos |
-| Dashboard | 🔧 Pendiente | KPIs básicos, requiere profundización |
+| Sanciones | ✅ Completo | Configuración + UI + multas en reportes |
+| Dashboard | ✅ Completo | KPIs, gráficos, detalle diario |
+| Reportes Excel | ✅ Completo | 4 reportes: mensual, planilla, atrasos, sanciones |
+| Validaciones | ✅ Completo | 5 reglas + importación manual |
+| Vacaciones | ✅ Completo | Tabla, CRUD, saldo, aprobación |
+| Permisos/Licencias | ✅ Completo | 2,909 reg. importados ASIS, CRUD, aprobación |
+| Certificados | ✅ Completo | 4 tipos, PDF automático, numeración secuencial |
+| Notificaciones | ✅ Completo | Badge, dropdown, página, eventos automáticos |
 
 **Alcance del Sistema:**
 - Gestión de Personal y Vínculos Laborales (CRUD)
 - Control de Asistencia Mensual con cálculo automático de estados
-- Gestión de Turnos con plantillas multisede y clonación
-- Seguimiento de Vacaciones y Permisos (pendiente)
-- Bloqueos y Sanciones por Atrasos (pendiente UI)
-- Dashboard Estratégico (pendiente profundización)
+- Gestión de Turnos con plantillas multisede y clonación anual
+- Seguimiento de Vacaciones con saldo y aprobación
+- Bloqueos y Sanciones por Atrasos
+- Dashboard Estratégico con KPIs y detalle diario
+- Reportes Excel exportables (estilo ASIS)
+- Validación automática de marcaciones biométricas
+- Sincronización con equipos ZKTeco
 
 **Datos Migrados desde ASIS (Legado):**
 - Sistema original: FTecSys.mdb (Microsoft Access, 54 MB, 35 tablas)

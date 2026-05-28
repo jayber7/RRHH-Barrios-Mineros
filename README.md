@@ -77,9 +77,16 @@ python sql/import_asis_attendance.py --all   # importar marcaciones y justificac
 - **Gestión de Personal:** CRUD completo con filtros, exportación, vinculos laborales
 - **Control de Asistencia:** Importación desde Excel, cálculo automático de estados (Normal, Atraso, Incompleta, Sin Marcación, etc.) basado en marcaciones biométricas vs turno asignado + tolerancias
 - **Turnos y Horarios:** Plantillas de turno multisemana, asignación masiva por período, clonación entre gestiones, calendario visual
-- **Dashboard Estratégico:** KPIs, gráficos de atrasos por servicio/unidad
-- **Biométrico:** Sincronización con ZKTeco, captura de marcaciones en tiempo real
+- **Dashboard Estratégico:** KPIs, gráficos de atrasos por servicio/unidad, detalle diario con logs biométricos
+- **Biométrico:** Sincronización con ZKTeco, captura de marcaciones en tiempo real, importación manual JSON/CSV
+- **Validaciones:** 5 reglas automáticas: marcas sin personal, duplicadas, fuera de horario, días sin marcación, 3+ marcas
+- **Reportes Excel:** Reporte mensual estilo ASIS, planilla consolidada, ranking de atrasos, sanciones con multas
+- **Vacaciones:** Solicitud, aprobación/rechazo, control de saldo (15 días anuales)
+- **Permisos y Licencias:** 21 tipos (comisión, baja médica, feriado, etc.), CRUD con aprobación, 2,909 registros históricos importados desde ASIS
+- **Certificados:** Generación automática de PDF (Trabajo, Ingresos, Antigüedad, Asistencia), numeración secuencial, descarga directa
+- **Notificaciones:** Badge en sidebar, dropdown de últimas no leídas, página dedicada, eventos automáticos desde vacaciones/permisos
 - **Bloqueos y Sanciones:** Cálculo de sanciones por atrasos recurrentes
+- **Turnos Nocturnos:** Detección automática con ventana 36h y estado especial (estado=5)
 - **Justificaciones:** Registro de permisos, licencias médicas, comisiones
 - **Autenticación:** JWT con seed inicial (admin/admin)
 
@@ -91,6 +98,10 @@ python sql/import_asis_attendance.py --all   # importar marcaciones y justificac
 | Asistencia | `asistencia_mensual`, `asistencia_diaria`, `justificaciones`, `auditoria_asistencia` | ~4,400 mensuales + ~134K diarios |
 | Turnos | `turnos_plantilla`, `turnos_asignados` | 87 plantillas, 23,851 asignaciones |
 | Biométrico | `biometrico_logs_raw`, `biometrico_config` | 108,989 marcaciones |
+| Vacaciones | `vacaciones` | CRUD con saldo y aprobación |
+| Permisos/Licencias | `permisos_laborales`, `cat_tipos_permisos` | 2,909 registros ASIS + CRUD manual |
+| Certificados | `certificados`, `secuencia_hr` | PDF automático, 4 tipos |
+| Notificaciones | `notificaciones` | Badge, dropdown, eventos automáticos |
 | Catálogos | `cat_motivos_justificacion`, `cat_unidades_servicio`, `sanciones_atrasos`, `sanciones_faltas` | — |
 
 ## Migración desde ASIS (Legado)

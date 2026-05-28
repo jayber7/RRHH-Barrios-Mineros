@@ -7,5 +7,8 @@ router.post('/config', BiometricoController.updateConfig);
 router.post('/sync-logs', BiometricoController.syncLogs);
 router.get('/users', BiometricoController.getUsers);
 router.get('/raw-logs', BiometricoController.getRawLogs);
+router.post('/import-logs', BiometricoController.importLogs);
+router.get('/validaciones', BiometricoController.getValidaciones);
+router.post('/recalcular', BiometricoController.recalcularAsistencia);
 
 module.exports = router;

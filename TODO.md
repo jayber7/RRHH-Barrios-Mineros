@@ -17,7 +17,7 @@
     - [x] Cálculo de estados (Normal, Atraso, Incompleta, Sin Marcación, etc.) basado en turno + marcaciones + tolerancias
     - [x] Años calculados: 2024, 2025, 2026 (Ene–May)
 
-## Fase 2: Módulos de Operación Diaria — EN PROGRESS
+## Fase 2: Módulos de Operación Diaria — COMPLETADA ✅
 - [x] **Módulo Biométrico (Captura Cruda):**
     - [x] Instalación de `node-zklib`
     - [x] Tablas `biometrico_config` y `biometrico_logs_raw`
@@ -29,18 +29,47 @@
     - [x] CRUD completo + calendario visual
     - [x] Paginación + filtro por año
     - [x] Clonación de asignaciones entre gestiones
-- [ ] **Gestión de Vacaciones:**
-    - [ ] Cálculo automático de días ganados por antigüedad
-    - [ ] Formulario de solicitud y aprobación
-- [ ] **Permisos y Bajas:**
-    - [ ] Registro de bajas médicas y permisos particulares
-    - [ ] Impacto automático en el consolidado de asistencia
-- [ ] **Dashboard de Asistencia:**
-    - [ ] Gráficos de tendencias mensuales
-    - [ ] Reporte de empleados con mayor atraso
-    - [ ] Filtros por unidad/servicio
+- [x] **Dashboard de Asistencia:**
+    - [x] KPIs avanzados (distribución de estados, nocturnos, tendencia mensual)
+    - [x] Gráficos (donut, barras, área)
+    - [x] Ranking de atrasos interactivo
+    - [x] Detalle diario con logs biométricos
+- [x] **Reportes Excel:**
+    - [x] Reporte mensual estilo ASIS (106 hojas)
+    - [x] Planilla consolidada (31 columnas diarias)
+    - [x] Ranking de atrasos
+    - [x] Sanciones con multas
+- [x] **Validación de Marcaciones:**
+    - [x] Importación manual JSON/CSV con deduplicación
+    - [x] 5 reglas de validación: sin personal, duplicadas, fuera de horario, sin marcación, 3+ marcas
 
-## Fase 3: Infraestructura y Despliegue
+## Fase 3: Gestión de Personal — EN PROGRESS
+- [x] **Gestión de Vacaciones:**
+    - [x] Tabla `vacaciones` con estados (PENDIENTE, APROBADO, RECHAZADO, GOZADO, ANULADO)
+    - [x] CRUD completo con control de saldo (15 días anuales)
+    - [x] API REST con filtros por estado/empleado/fechas
+    - [x] Frontend con tabla, formulario, cards de resumen
+- [x] **Permisos y Licencias:**
+    - [x] Tabla `permisos_laborales` con tipos (VACACION, BAJA_MEDICA, COMISION, PERMISO, etc.)
+    - [x] Catálogo `cat_tipos_permisos` con 21 tipos
+    - [x] Importación de 2,909 registros desde ASIS (TablaVacaciones.csv)
+    - [x] CRUD completo con aprobación/rechazo/finalización
+    - [x] API REST con filtros por tipo/estado/fechas
+    - [x] Frontend con cards de resumen, stats por tipo, tabla y formulario
+- [x] **Certificaciones:**
+    - [x] Tabla `certificados` con estados (GENERADO, ENTREGADO, ANULADO)
+    - [x] Generación de PDFs con pdf-lib (Trabajo, Ingresos, Antigüedad, Asistencia)
+    - [x] Numeración automática tipo CERT-2026-XXXX
+    - [x] API REST con descarga directa de PDF
+    - [x] Frontend con cards, tabla y generación con descarga automática
+- [x] **Notificaciones:**
+    - [x] Tabla `notificaciones` con 4 tipos (INFO, SUCCESS, WARNING, ALERT)
+    - [x] API REST con listar, contar, marcar leída, marcar todas, eliminar
+    - [x] Badge en sidebar con contador de no leídas + dropdown de últimas 5
+    - [x] Página dedicada con resumen y lista completa
+    - [x] Eventos automáticos desde vacaciones (cambio estado) y permisos (cambio estado)
+
+## Fase 4: Infraestructura y Despliegue
 - [ ] **Migración a Render:**
     - [ ] Dump de BD local → importar en Render PostgreSQL
     - [ ] Configurar backend como Web Service
@@ -49,6 +78,6 @@
     - [ ] Pruebas de conexión y funcionalidad
 - [ ] **CI/CD:** Pipeline básico con GitHub Actions
 
-## Fase 4: Documentación y Salidas
-- [ ] **Certificaciones y Memorándums:** Generación automática de PDFs
+## Fase 5: Documentación y Salidas
+- [ ] **Comunicados/Memorándums:** Integración con correspondencia
 - [ ] **Módulo de Reemplazos:** Gestión de personal externo para cubrir acefalías temporales

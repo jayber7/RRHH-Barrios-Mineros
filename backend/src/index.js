@@ -15,7 +15,12 @@ const configRoutes = require('./routes/configRoutes');
 const turnosRoutes = require('./routes/turnosRoutes');
 const justificacionesRoutes = require('./routes/justificacionesRoutes');
 const sancionesRoutes = require('./routes/sancionesRoutes');
+const vacacionesRoutes = require('./routes/vacacionesRoutes');
+const permisosRoutes = require('./routes/permisosRoutes');
+const certificadosRoutes = require('./routes/certificadosRoutes');
+const notificacionesRoutes = require('./routes/notificacionesRoutes');
 const { startEstadoJob } = require('./cron/estadoJob');
+const { startCalculoDiarioJob } = require('./cron/calculoDiarioJob');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +43,10 @@ app.use('/api/reportes', reporteRoutes);
 app.use('/api/turnos', turnosRoutes);
 app.use('/api/justificaciones', justificacionesRoutes);
 app.use('/api/sanciones', sancionesRoutes);
+app.use('/api/vacaciones', vacacionesRoutes);
+app.use('/api/permisos', permisosRoutes);
+app.use('/api/certificados', certificadosRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');
@@ -50,6 +59,8 @@ app.get('/health', (req, res) => {
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
+    startEstadoJob();
+    startCalculoDiarioJob();
   });
 }
 

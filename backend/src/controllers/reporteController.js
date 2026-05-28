@@ -1,4 +1,5 @@
 const ReporteService = require('../services/reporteService');
+const ReporteAsistenciaService = require('../services/reporteAsistenciaService');
 const db = require('../config/db');
 
 const getInventarioPersonal = async (req, res) => {
@@ -43,8 +44,72 @@ const getReportesConfig = async (req, res) => {
   }
 };
 
+const getReporteMensual = async (req, res) => {
+  try {
+    const { mes, anio, tipo } = req.query;
+    if (!mes || !anio) return res.status(400).json({ error: 'mes y anio requeridos' });
+    const buffer = await ReporteAsistenciaService.generarReporteMensualEmpleado(
+      parseInt(mes), parseInt(anio), tipo || null
+    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=reporte_asistencia_${mes}_${anio}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getPlanillaConsolidada = async (req, res) => {
+  try {
+    const { mes, anio, tipo } = req.query;
+    if (!mes || !anio) return res.status(400).json({ error: 'mes y anio requeridos' });
+    const buffer = await ReporteAsistenciaService.generarPlanillaConsolidada(
+      parseInt(mes), parseInt(anio), tipo || null
+    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=planilla_consolidada_${mes}_${anio}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getReporteAtrasos = async (req, res) => {
+  try {
+    const { mes, anio, top = 50, tipo } = req.query;
+    if (!mes || !anio) return res.status(400).json({ error: 'mes y anio requeridos' });
+    const buffer = await ReporteAsistenciaService.generarReporteAtrasos(
+      parseInt(mes), parseInt(anio), parseInt(top), tipo || null
+    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=reporte_atrasos_${mes}_${anio}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getReporteSanciones = async (req, res) => {
+  try {
+    const { mes, anio, tipo } = req.query;
+    if (!mes || !anio) return res.status(400).json({ error: 'mes y anio requeridos' });
+    const buffer = await ReporteAsistenciaService.generarReporteSanciones(
+      parseInt(mes), parseInt(anio), tipo || null
+    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=reporte_sanciones_${mes}_${anio}.xlsx`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getInventarioPersonal,
   getContratosPorVencer,
-  getReportesConfig
+  getReportesConfig,
+  getReporteMensual,
+  getPlanillaConsolidada,
+  getReporteAtrasos,
+  getReporteSanciones
 };
