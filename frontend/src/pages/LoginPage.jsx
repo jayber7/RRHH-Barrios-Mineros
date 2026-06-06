@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
@@ -12,13 +12,15 @@ export default function LoginPage() {
   const { login, usuario } = useAuth();
   const navigate = useNavigate();
 
-  if (usuario) {
-    if (!usuario.password_cambiado) {
-      navigate('/cambiar-password');
-    } else {
-      navigate('/');
+  useEffect(() => {
+    if (usuario) {
+      if (!usuario.password_cambiado) {
+        navigate('/cambiar-password');
+      } else {
+        navigate('/');
+      }
     }
-  }
+  }, [usuario, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

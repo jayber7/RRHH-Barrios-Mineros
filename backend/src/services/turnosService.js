@@ -280,7 +280,15 @@ class TurnosService {
   static async getCalendario(mes, anio, servicio) {
     let query = `
       SELECT ta.*, p.ci, p.primer_nombre, p.apellido_paterno, p.apellido_materno,
-             tp.codigo as turno_codigo, tp.nombre as turno_nombre,
+             tp.id as plantilla_id, tp.codigo as turno_codigo, tp.nombre as turno_nombre,
+             tp.lunes_entrada, tp.lunes_salida, tp.martes_entrada, tp.martes_salida,
+             tp.miercoles_entrada, tp.miercoles_salida, tp.jueves_entrada, tp.jueves_salida,
+             tp.viernes_entrada, tp.viernes_salida, tp.sabado_entrada, tp.sabado_salida,
+             tp.domingo_entrada, tp.domingo_salida,
+             tp.lunes_habilitado, tp.martes_habilitado, tp.miercoles_habilitado,
+             tp.jueves_habilitado, tp.viernes_habilitado, tp.sabado_habilitado, tp.domingo_habilitado,
+             tp.nocturno_lunes, tp.nocturno_martes, tp.nocturno_miercoles, tp.nocturno_jueves,
+             tp.nocturno_viernes, tp.nocturno_sabado, tp.nocturno_domingo,
              vl.unidad_servicio
       FROM turnos_asignados ta
       JOIN personal p ON ta.personal_id = p.id
@@ -299,6 +307,25 @@ class TurnosService {
 
     query += ' ORDER BY vl.unidad_servicio, p.apellido_paterno, ta.fecha_inicio';
     const { rows } = await db.query(query, params);
+    return rows;
+  }
+
+  static async getCalendarioDia(mes, anio, dia) {
+    const fecha = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const diaSem = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date(fecha).getDay()];
+    const { rows } = await db.query(`
+      SELECT ta.*, p.ci, p.primer_nombre, p.apellido_paterno, p.apellido_materno,
+             tp.codigo as turno_codigo, tp.nombre as turno_nombre,
+             tp.${diaSem}_entrada as entrada, tp.${diaSem}_salida as salida,
+             tp.nocturno_${diaSem} as nocturno, tp.${diaSem}_habilitado as habilitado,
+             vl.unidad_servicio, vl.cargo_actual
+      FROM turnos_asignados ta
+      JOIN personal p ON ta.personal_id = p.id
+      JOIN turnos_plantilla tp ON ta.turno_plantilla_id = tp.id
+      LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id
+      WHERE ta.fecha_inicio <= $1 AND (ta.fecha_fin IS NULL OR ta.fecha_fin >= $1)
+      ORDER BY vl.unidad_servicio, p.apellido_paterno
+    `, [fecha]);
     return rows;
   }
 

@@ -17,6 +17,7 @@ router.delete('/asignados', TurnosController.deleteAsignadosByPersonal);
 
 router.get('/empleado/:personalId', TurnosController.getTurnoEmpleado);
 router.get('/calendario', TurnosController.getCalendario);
+router.get('/calendario/dia', TurnosController.getCalendarioDia);
 router.get('/personal-sin-turno', TurnosController.getPersonalSinTurno);
 router.get('/years', TurnosController.getYears);
 router.post('/clonar', TurnosController.cloneAsignaciones);

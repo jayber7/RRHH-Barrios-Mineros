@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middleware/authMiddleware');
 router.use(authMiddleware);
 
 router.get('/stats', DashboardController.getStats);
+router.get('/biometrico', DashboardController.getBiometricoStats);
 router.get('/detalle-diario', DashboardController.getDetalleDiario);
 
 module.exports = router;

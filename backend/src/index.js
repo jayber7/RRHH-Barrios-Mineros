@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/../.env' });
 
 const personalRoutes = require('./routes/personalRoutes');
 const asistenciaRoutes = require('./routes/asistenciaRoutes');
@@ -21,6 +21,7 @@ const certificadosRoutes = require('./routes/certificadosRoutes');
 const notificacionesRoutes = require('./routes/notificacionesRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
 const comunicadosRoutes = require('./routes/comunicadosRoutes');
+const selfServiceRoutes = require('./routes/selfServiceRoutes');
 const { startEstadoJob } = require('./cron/estadoJob');
 const { startCalculoDiarioJob } = require('./cron/calculoDiarioJob');
 
@@ -51,6 +52,7 @@ app.use('/api/certificados', certificadosRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/comunicados', comunicadosRoutes);
+app.use('/api/self-service', selfServiceRoutes);
 
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');

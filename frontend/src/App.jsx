@@ -8,6 +8,7 @@ import AsistenciasPage from './pages/AsistenciasPage';
 import BiometricoPage from './pages/BiometricoPage';
 import Dashboard from './pages/Dashboard';
 import ReportesPage from './pages/ReportesPage';
+import SelfServicePage from './pages/SelfServicePage';
 import LoginPage from './pages/LoginPage';
 import CorrespondenciaPage from './pages/CorrespondenciaPage';
 import CorrespondenciaForm from './pages/CorrespondenciaForm';
@@ -93,6 +94,7 @@ function AppContent() {
   if (!usuario.password_cambiado) {
     return (
       <Routes>
+        <Route path="/cambiar-password" element={<CambiarPasswordPage />} />
         <Route path="*" element={<CambiarPasswordPage />} />
       </Routes>
     );
@@ -108,6 +110,7 @@ function AppContent() {
           <Route path="/personal" element={<PersonalPage />} />
           <Route path="/asistencias" element={<AsistenciasPage />} />
           <Route path="/biometrico" element={<BiometricoPage />} />
+          <Route path="/self-service" element={<SelfServicePage />} />
           <Route path="/turnos" element={<TurnosPage />} />
           <Route path="/vacaciones" element={<VacacionesPage />} />
           <Route path="/permisos" element={<PermisosPage />} />

@@ -81,6 +81,16 @@ class DashboardController {
       res.status(500).json({ error: 'Error al obtener detalle diario' });
     }
   }
+
+  static async getBiometricoStats(req, res) {
+    try {
+      const data = await DashboardService.getBiometricoStats();
+      res.json(data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al obtener estadísticas biométricas' });
+    }
+  }
 }
 
 module.exports = DashboardController;

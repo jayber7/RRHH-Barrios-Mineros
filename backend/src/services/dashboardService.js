@@ -239,6 +239,44 @@ class DashboardService {
       })),
     };
   }
+
+  static async getBiometricoStats() {
+    const [marcacionesHoy, sinMarcar, config, timeline] = await Promise.all([
+      db.query(`
+        SELECT COUNT(*) as total FROM biometrico_logs_raw
+        WHERE timestamp::date = CURRENT_DATE
+      `),
+      db.query(`
+        SELECT COUNT(*) as total
+        FROM personal p
+        WHERE p.biometrico_id IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM biometrico_logs_raw b
+            WHERE b.biometrico_id::text = p.biometrico_id::text
+              AND b.timestamp::date = CURRENT_DATE
+          )
+      `),
+      db.query('SELECT * FROM biometrico_config LIMIT 1'),
+      db.query(`
+        SELECT b.*, p.primer_nombre, p.apellido_paterno, p.apellido_materno
+        FROM biometrico_logs_raw b
+        LEFT JOIN personal p ON b.biometrico_id::text = p.biometrico_id::text
+        WHERE b.timestamp::date = CURRENT_DATE
+        ORDER BY b.timestamp DESC
+        LIMIT 30
+      `),
+    ]);
+
+    return {
+      total_hoy: parseInt(marcacionesHoy.rows[0]?.total || 0),
+      sin_marcar: parseInt(sinMarcar.rows[0]?.total || 0),
+      dispositivo: config.rows[0] || null,
+      timeline: timeline.rows.map(r => ({
+        ...r,
+        timestamp: r.timestamp,
+      })),
+    };
+  }
 }
 
 module.exports = DashboardService;

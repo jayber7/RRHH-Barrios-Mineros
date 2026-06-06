@@ -4,7 +4,7 @@ import {
   Users, Calendar, Clock, Plane, FileBadge, 
   MessageSquare, RefreshCw, LayoutDashboard, Cpu,
   FileSpreadsheet, FileText, Inbox, Settings, LogOut, AlertTriangle,
-  Bell, CheckCheck
+  Bell, CheckCheck, User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config/api';
@@ -76,6 +76,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
+    { name: 'Mi Perfil', icon: <User size={20} />, path: '/self-service' },
     { name: 'Gestión de Personal', icon: <Users size={20} />, path: '/personal' },
     { name: 'Asistencias', icon: <Clock size={20} />, path: '/asistencias' },
     { name: 'Biométrico', icon: <Cpu size={20} />, path: '/biometrico' },

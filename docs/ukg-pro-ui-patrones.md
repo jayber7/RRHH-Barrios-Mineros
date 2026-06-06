@@ -1,0 +1,233 @@
+# Patrones de UI — UKG Pro Workforce Management
+
+Basado en análisis de UKG Pro (4.7 ⭐, 277K reseñas), la app móvil nativa (288 MB), la plataforma web, documentación oficial y reseñas de usuarios reales.
+
+---
+
+## 1. Dashboard Glanceable (Inicio)
+
+```
+┌─────────────────────────────────────┐
+│ 12:30           Bienvenido, Carlos  │
+├─────────────────────────────────────┤
+│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ │
+│ │ HOY  │ │ TURNO│ │ PEND.│ │ ALERT│ │
+│ │ 8h30m│ │ Mañ. │ │  3   │ │  1   │ │
+│ └──────┘ └──────┘ └──────┘ └──────┘ │
+├─────────────────────────────────────┤
+│ Marcaciones de hoy                  │
+│ ┌────┬────┬────┬────┬────┬────┐     │
+│ │ 7:55│9:00│12:00│13:00│17:00│17:05│ │
+│ │ Ent │Sal │Alm  │Vuelta│Sal │Err │ │
+│ └────┴────┴────┴────┴────┴────┘     │
+│ ● ● ● ● ● ○                         │
+├─────────────────────────────────────┤
+│ Próximo turno: Hoy 14:00 - 22:00    │
+│ Alertas: 1 sin confirmar            │
+└─────────────────────────────────────┘
+```
+
+**Patrón clave:** 4 tarjetas en grid 2×2 con KPIs. Timeline horizontal de marcaciones del día. Código de colores: verde = ok, rojo = problema, amarillo = pendiente.
+
+**Comportamiento:** Al tocar una tarjeta, navega al detalle. El timeline es scrolleable horizontalmente.
+
+---
+
+## 2. Bottom Navigation
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│           (Content Area)            │
+│                                     │
+│                                     │
+├─────────────────────────────────────┤
+│ 🏠      📅      ⏱      💰      👤 │
+│ Home  Schedule  Time    Pay    Profile│
+└─────────────────────────────────────┘
+```
+
+5 tabs fijos siempre visibles. Icono + texto. Tab activa con color primario.
+
+---
+
+## 3. Timecard Visual (Vista Día)
+
+```
+┌─────────────────────────────────────┐
+│ ←  Lunes, 15 de Junio              │
+├─────────────────────────────────────┤
+│ Turno: Mañana (07:00 - 15:00)      │
+├─────────────────────────────────────┤
+│ Entrada    07:02 ✅                 │
+│ Salida     12:00 ✅                 │
+│ Regreso    12:32 ✅                 │
+│ Salida     15:05 ✅                 │
+├─────────────────────────────────────┤
+│ Total: 7h 31m                       │
+│ Atraso: 2 min ⚠️                   │
+│ Extra: 0h 0m                        │
+├─────────────────────────────────────┤
+│ [Firmar Timecard]                   │
+└─────────────────────────────────────┘
+```
+
+**Timeline vertical** con cada marcación listada en orden cronológico. Cada fila muestra: tipo (Entrada/Salida), hora, estado (icono ✅/⚠️/❌). Resumen al final con totales.
+
+---
+
+## 4. Calendario Visual de Turnos (Schedule)
+
+```
+┌─────────────────────────────────────┐
+│ < Junio 2026 >              [Filtro]│
+├─────────────────────────────────────┤
+│ Lu  Ma  Mi  Ju  Vi  Sa  Do         │
+│ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐│
+│ │  │ │  │ │  │ │  │ │ 1 │ │ 2 │ │ 3 ││
+│ │  │ │  │ │  │ │  │ │Mñ │ │Ta │ │Li ││
+│ └──┘ └──┘ └──┘ └──┘ └──┘ └──┘ └──┘│
+│ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐│
+│ │ 4 │ │ 5 │ │ 6 │ │ 7 │ │ 8 │ │ 9 ││10││
+│ │Noc│ │Mñ │ │Mñ │ │Ta │ │Ta │ │Li ││Li││
+│ └──┘ └──┘ └──┘ └──┘ └──┘ └──┘ └──┘│
+│ ...                                  │
+└─────────────────────────────────────┘
+```
+
+**Código de colores por tipo de turno:**
+
+| Color | Tipo | Hex |
+|-------|------|-----|
+| Azul claro | Mañana | #4A90D9 |
+| Naranja | Tarde | #F5A623 |
+| Púrpura oscuro | Noche | #7B2D8E |
+| Verde | Libre/Descanso | #7ED321 |
+| Amarillo | Vacaciones | #F8E71C |
+| Rojo claro | Feriado | #D0021B |
+| Gris | No laboral | #9B9B9B |
+
+**Comportamiento:** Al tocar un día, abre modal con detalle del turno. Swipe horizontal para cambiar de mes. Botón "Hoy" para volver al día actual.
+
+---
+
+## 5. Shift Marketplace (Turnos Disponibles)
+
+```
+┌─────────────────────────────────────┐
+│ Turnos disponibles ──── [Filtros ▼] │
+├─────────────────────────────────────┤
+│ ┌─────────────────────────────┐     │
+│ │ Enfermería - Piso 3         │     │
+│ │ Vie 20 Jun 14:00-22:00     │     │
+│ │ 💰 +$45/h (incentivado)    │     │
+│ │ [Tomar turno]               │     │
+│ └─────────────────────────────┘     │
+│ ┌─────────────────────────────┐     │
+│ │ UTI - Piso 5                │     │
+│ │ Sáb 21 Jun 22:00-06:00     │     │
+│ │ 💰 +$60/h (doble nocturno) │     │
+│ │ [Tomar turno]               │     │
+│ └─────────────────────────────┘     │
+└─────────────────────────────────────┘
+```
+
+Los turnos libres se publican con incentivos visibles. El empleado "compra" el turno con un clic. El sistema valida disponibilidad y skills.
+
+---
+
+## 6. Pantalla de Login (QR + Access Code)
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│           [Logo UKG]                │
+│                                     │
+│  Escanea el código QR de tu         │
+│  organización o ingresa tu          │
+│  Access Code                         │
+│                                     │
+│  ┌────────────────────────┐         │
+│  │  [▓▓▓▓▓▓▓▓▓▓▓▓▓▓]     │         │
+│  │  [Código QR]           │         │
+│  └────────────────────────┘         │
+│                                     │
+│  ┌──────────────────────────┐       │
+│  │ [Access Code]            │       │
+│  └──────────────────────────┘       │
+│                                     │
+│  [Continuar]                        │
+│                                     │
+│  —o—                                │
+│  [Iniciar sesión con SSO]           │
+│                                     │
+│  Compatible con Face ID / Touch ID  │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 7. Alertas y Notificaciones
+
+```
+  🔔 Campana con badge numérico
+     ↓
+┌─────────────────────────────┐
+│ Notificaciones              │
+├─────────────────────────────┤
+│ ⏰ Recordatorio: Tu turno   │
+│    comienza en 1 hora       │  ← Push notification
+├─────────────────────────────┤
+│ ⚠️ Error en marcación:     │
+│    Falta salida 15/06      │  ← Alerta del sistema
+├─────────────────────────────┤
+│ ✅ Timecard aprobada       │
+│    Período 01-15 Jun       │  ← Confirmación
+└─────────────────────────────┘
+```
+
+**Tipos de notificaciones:**
+- **Push**: recordatorio de turno, turno disponible, aprobación de timecard
+- **In-app**: errores de marcación, alertas de overtime, solicitudes pendientes
+- **Email**: resumen semanal, alertas de compliance, timecards sin firmar
+
+---
+
+## 8. Geofencing / Location-based Clock In
+
+```
+┌─────────────────────────────────────┐
+│  Marcar entrada                     │
+├─────────────────────────────────────┤
+│                                    │
+│   📍 Estás en:                     │
+│   Hospital Barrios Mineros          │
+│   ✅ Ubicación válida               │
+│                                    │
+│   ┌──────────────────────────┐     │
+│   │      [MARCAR ENTRADA]    │     │
+│   └──────────────────────────┘     │
+│                                    │
+│   Hora: 07:02                      │
+│   Dispositivo: iPhone 15           │
+│                                    │
+├─────────────────────────────────────┤
+│ ❌ ¿Fuera de la ubicación?          │
+│    Puedes solicitar justificación   │
+│    [Justificar marcación remota]    │
+└─────────────────────────────────────┘
+```
+
+---
+
+## Referencias Visuales
+
+No fue posible descargar screenshots directamente, pero estas URLs contienen las imágenes oficiales:
+
+- **UKG Pro App Store screenshots**: https://apps.apple.com/us/app/ukg-pro/id6445849909
+- **UKG Google Play screenshots**: https://play.google.com/store/apps/details?id=com.ukg.oneapp
+- **Smart Square Go App Store**: https://apps.apple.com/us/app/smart-square-go/id6466659922
+- **UKG Healthcare product page**: https://www.ukg.com/industry-solutions/healthcare
+- **symplr Smart Square product**: https://www.symplr.com/products/smart-square
+- **UKG Pro Mobile demo video**: https://www.youtube.com/watch?v=yIJaSPxa1Yg
+- **UKG Pro WFM Reports PDF (UKG official PDF)**: https://www.ukg.com/sites/default/files/2023-09/UKG-Pro-Workforce-Management-Reports.pdf

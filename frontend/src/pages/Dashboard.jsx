@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Users, Clock, AlertTriangle, TrendingUp,
   ArrowUpRight, ArrowDownRight, Briefcase, Moon,
-  Search, X, Download
+  Search, X, Download, Cpu, Activity
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -17,6 +17,17 @@ const ESTADO_LABELS = { 1: 'Normal', 2: 'Atraso', 3: 'Justificado', 4: 'Falta', 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 const RADAR_COLORS = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'];
+
+function formatDistancia(ts) {
+  const seg = Math.floor((Date.now() - ts.getTime()) / 1000);
+  if (seg < 60) return 'Ahora';
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `Hace ${min} min`;
+  const hor = Math.floor(min / 60);
+  if (hor < 24) return `Hace ${hor}h ${min % 60}m`;
+  const dia = Math.floor(hor / 24);
+  return `Hace ${dia}d`;
+}
 
 function StatCard({ title, value, icon, color, subtitle, variacion }) {
   return (
@@ -48,6 +59,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alertas, setAlertas] = useState(null);
+  const [biometricoStats, setBiometricoStats] = useState(null);
   const [filtroMes, setFiltroMes] = useState(new Date().getMonth() + 1);
   const [filtroAnio, setFiltroAnio] = useState(2026);
   const [filtroUnidad, setFiltroUnidad] = useState('');
@@ -83,6 +95,18 @@ export default function Dashboard() {
     api.get('/api/personal/contratos-alertas')
       .then(r => setAlertas(r.data))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    api.get('/api/dashboard/biometrico')
+      .then(r => setBiometricoStats(r.data))
+      .catch(() => {});
+    const iv = setInterval(() => {
+      api.get('/api/dashboard/biometrico')
+        .then(r => setBiometricoStats(r.data))
+        .catch(() => {});
+    }, 60000);
+    return () => clearInterval(iv);
   }, []);
 
   const searchPersonal = async (term) => {
@@ -298,6 +322,91 @@ export default function Dashboard() {
             ))}
           </div>
         </>
+      )}
+
+      {biometricoStats && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">Resumen Biométrico</h2>
+              <p className="text-slate-500 text-sm">Estado actual del dispositivo y marcaciones del día</p>
+            </div>
+            {biometricoStats.dispositivo?.ultimo_sync_logs && (
+              <span className={`text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 ${
+                biometricoStats.dispositivo.estado === 'CONECTADO' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${biometricoStats.dispositivo.estado === 'CONECTADO' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                {biometricoStats.dispositivo.estado === 'CONECTADO' ? 'En línea' : 'Desconectado'}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Marcaciones Hoy</span>
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center"><Activity size={16} className="text-white" /></div>
+              </div>
+              <span className="text-2xl font-black text-slate-800">{biometricoStats.total_hoy}</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Dispositivo</span>
+                <div className={`w-8 h-8 ${biometricoStats.dispositivo?.estado === 'CONECTADO' ? 'bg-emerald-500' : 'bg-amber-500'} rounded-lg flex items-center justify-center`}><Cpu size={16} className="text-white" /></div>
+              </div>
+              <span className="text-2xl font-black text-slate-800">{biometricoStats.dispositivo?.ip_address || 'Sin config'}</span>
+              <p className="text-[11px] text-slate-400 mt-0.5">{biometricoStats.dispositivo?.estado || 'DESCONECTADO'}</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Última Sync</span>
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center"><Clock size={16} className="text-white" /></div>
+              </div>
+              <span className="text-2xl font-black text-slate-800">
+                {biometricoStats.dispositivo?.ultimo_sync_logs ? formatDistancia(new Date(biometricoStats.dispositivo.ultimo_sync_logs)) : '-'}
+              </span>
+              {biometricoStats.dispositivo?.ultimo_sync_logs && (
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {new Date(biometricoStats.dispositivo.ultimo_sync_logs).toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Sin Marcar Hoy</span>
+                <div className="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} className="text-white" /></div>
+              </div>
+              <span className="text-2xl font-black text-slate-800">{biometricoStats.sin_marcar}</span>
+              <p className="text-[11px] text-slate-400 mt-0.5">Personal sin registro</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 mb-3">Marcaciones de Hoy</h3>
+            {biometricoStats.timeline?.length > 0 ? (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {biometricoStats.timeline.map((m, i) => (
+                  <div key={m.id || i} className="flex-shrink-0 bg-slate-50 p-3 rounded-xl min-w-[180px] border border-slate-100">
+                    <p className="text-sm font-bold text-slate-700 truncate">
+                      {m.primer_nombre ? `${m.primer_nombre} ${m.apellido_paterno || ''}` : <span className="text-rose-400 italic">Sin vinculo</span>}
+                    </p>
+                    <p className="text-xs font-mono text-slate-500 mt-0.5">{new Date(m.timestamp).toLocaleString()}</p>
+                    <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      m.estado_asistencia === 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                    }`}>
+                      {m.estado_asistencia === 0 ? 'Entrada' : 'Salida/Otro'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-8">Sin marcaciones registradas hoy</p>
+            )}
+          </div>
+        </div>
       )}
 
       {showSearch && (

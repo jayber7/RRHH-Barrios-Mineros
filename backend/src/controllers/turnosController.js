@@ -137,6 +137,18 @@ class TurnosController {
     }
   }
 
+  static async getCalendarioDia(req, res) {
+    try {
+      const { mes, anio, dia } = req.query;
+      if (!mes || !anio || !dia) return res.status(400).json({ error: 'Mes, año y día requeridos' });
+      const data = await TurnosService.getCalendarioDia(parseInt(mes), parseInt(anio), parseInt(dia));
+      res.json(data);
+    } catch (error) {
+      console.error('Error al obtener detalle del día:', error);
+      res.status(500).json({ error: 'Error al obtener detalle del día' });
+    }
+  }
+
   static async getPersonalSinTurno(req, res) {
     try {
       const personal = await TurnosService.getPersonalSinTurno();
