@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Users, Clock, Search, Trash2, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Calendar, Users, Clock, Search, Pencil, Trash2, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 import TurnoPlantillaForm from '../components/TurnoPlantillaForm';
 import TurnoAsignacionForm from '../components/TurnoAsignacionForm';
@@ -25,12 +25,25 @@ const TurnosPage = () => {
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
   const [page, setPage] = useState(1);
   const [clonando, setClonando] = useState(false);
+  const plantillaScrollRef = useRef(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    const el = plantillaScrollRef.current;
+    if (el) setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
+
+  const scrollRight = () => {
+    const el = plantillaScrollRef.current;
+    if (el) el.scrollBy({ left: 400, behavior: 'smooth' });
+  };
 
   const fetchPlantillas = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/turnos/plantilla`);
       const data = await res.json();
       setPlantillas(data);
+      setTimeout(checkScroll, 50);
     } catch (e) { console.error(e); }
   };
 
@@ -47,7 +60,7 @@ const TurnosPage = () => {
     try {
       const params = new URLSearchParams();
       if (yearFilter) params.set('year', yearFilter);
-      if (filtroBuscar) params.set('personal_id', filtroBuscar);
+      if (filtroBuscar) params.set('q', filtroBuscar);
       params.set('page', page.toString());
       params.set('limit', '50');
       const res = await fetch(`${API_BASE_URL}/api/turnos/asignados?${params}`);
@@ -65,18 +78,21 @@ const TurnosPage = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/personal?limit=1000`);
       const data = await res.json();
-      setPersonal(data);
+      setPersonal(data.data || data || []);
     } catch (e) { console.error(e); }
   };
 
   useEffect(() => { fetchPlantillas(); fetchPersonal(); fetchYears(); }, []);
 
   useEffect(() => {
-    if (activeTab === 'asignaciones') {
-      setPage(1);
-      fetchAsignados();
-    }
-  }, [activeTab, yearFilter]);
+    const timer = setTimeout(() => {
+      if (activeTab === 'asignaciones') {
+        setPage(1);
+        fetchAsignados();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [activeTab, yearFilter, filtroBuscar]);
 
   useEffect(() => {
     if (activeTab === 'asignaciones') fetchAsignados();
@@ -139,29 +155,39 @@ const TurnosPage = () => {
       {activeTab === 'plantillas' && (
         <div className="space-y-6">
           <div className="flex justify-end">
-            <button onClick={() => { setShowForm(!showForm); setEditing(null); }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${
-                showForm ? 'bg-slate-200 text-slate-700' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            ><Plus size={18} /> {showForm ? 'Cancelar' : 'Nueva Plantilla'}</button>
+            <button onClick={() => { setShowForm(true); setEditing(null); }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all bg-blue-600 text-white hover:bg-blue-700"
+            ><Plus size={18} /> Nueva Plantilla</button>
           </div>
 
           {showForm && (
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-              <TurnoPlantillaForm
-                plantilla={editing}
-                onSave={() => { setShowForm(false); setEditing(null); fetchPlantillas(); }}
-                onCancel={() => { setShowForm(false); setEditing(null); }}
-              />
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+                <TurnoPlantillaForm
+                  plantilla={editing}
+                  onSave={() => { setShowForm(false); setEditing(null); fetchPlantillas(); }}
+                  onCancel={() => { setShowForm(false); setEditing(null); }}
+                />
+              </div>
             </div>
           )}
 
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Código</th>
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative">
+            {canScrollRight && (
+              <div className="absolute right-1 top-3 z-30">
+                <button type="button" onClick={scrollRight}
+                  className="w-9 h-9 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-all cursor-pointer">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+            <div ref={plantillaScrollRef} onScroll={checkScroll} className="overflow-x-auto">
+              <table className="w-full text-left min-w-[1000px]">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100 sticky top-0 z-20">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase sticky left-0 bg-slate-50/50 z-30">Código</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Nombre</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Asign.</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Lunes</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Martes</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Miércoles</th>
@@ -176,8 +202,17 @@ const TurnosPage = () => {
               <tbody className="divide-y divide-slate-50">
                 {plantillas.map(p => (
                   <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-3 font-bold text-slate-700">{p.codigo}</td>
+                    <td className="px-6 py-3 font-bold text-slate-700 sticky left-0 bg-white z-10">{p.codigo}</td>
                     <td className="px-6 py-3 text-slate-500 text-sm">{p.nombre || '--'}</td>
+                    <td className="px-6 py-3 text-center">
+                      <span className={`inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                        p.total_asignaciones === 0 ? 'bg-slate-100 text-slate-400' :
+                        p.total_asignaciones <= 10 ? 'bg-blue-50 text-blue-600' :
+                        'bg-emerald-50 text-emerald-600'
+                      }`}>
+                        {p.total_asignaciones || 0}
+                      </span>
+                    </td>
                     {['lunes','martes','miercoles','jueves','viernes','sabado','domingo'].map(d => {
                       const entrada = p[`${d}_entrada`];
                       const salida = p[`${d}_salida`];
@@ -195,15 +230,16 @@ const TurnosPage = () => {
                     <td className="px-6 py-3 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => { setEditing(p); setShowForm(true); }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">✏️</button>
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil size={16} /></button>
                         <button onClick={() => handleDeletePlantilla(p.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">🗑️</button>
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}
@@ -221,7 +257,7 @@ const TurnosPage = () => {
             </div>
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" placeholder="Buscar por ID personal..."
+              <input type="text" placeholder="Buscar por nombre, CI o ID..."
                 value={filtroBuscar} onChange={e => setFiltroBuscar(e.target.value)}
                 className="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
               />

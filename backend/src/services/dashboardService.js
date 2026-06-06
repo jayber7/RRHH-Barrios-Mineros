@@ -7,19 +7,32 @@ class DashboardService {
     const targetAnio = anio || (await ConfiguracionService.get('dashboard_anio_default', 2026));
 
     const unidadWhere = unidad
-      ? `AND vl.unidad_servicio = ${unidad === 'SIN ASIGNAR' ? "'SIN ASIGNAR'" : `'${unidad.replace(/'/g, "''")}'`}`
+      ? unidad === 'SIN ASIGNAR'
+        ? "AND (vl.unidad_servicio IS NULL OR vl.unidad_servicio = 'SIN ASIGNAR')"
+        : `AND vl.unidad_servicio = '${unidad.replace(/'/g, "''")}'`
       : '';
-    const unidadJoin = unidad ? `JOIN vinculos_laborales vl ON vl.personal_id = p.id` : '';
+    const joinVl = unidad
+      ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id'
+      : '';
+
+    // Common unit filter for queries that already have vl alias via LEFT JOIN
+    // (uses LEFT JOIN so WHERE clause on vl works correctly)
+    const leftJoinVl = 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id';
 
 
     const [totalPersonal, tipoDist, asistenciaRes, topAtrasos,
            distEstados, distUnidades, tendencia, nocturnos, ausentismo,
            topFaltas, comparativo, radarUnidad] = await Promise.all([
-      db.query('SELECT COUNT(*) FROM personal'),
+      db.query(`
+        SELECT COUNT(*) FROM personal p
+        ${joinVl}
+        WHERE 1=1 ${unidadWhere}
+      `),
       db.query(`
         SELECT COALESCE(tp.nombre_tipo, 'SIN ASIGNAR') as label, COUNT(*) as value
         FROM vinculos_laborales vl
         LEFT JOIN cat_tipos_personal tp ON vl.tipo_personal_id = tp.id
+        WHERE 1=1 ${unidadWhere}
         GROUP BY tp.nombre_tipo ORDER BY value DESC
       `),
       db.query(`
@@ -39,7 +52,7 @@ class DashboardService {
         FROM asistencia_mensual am
         JOIN personal p ON am.personal_id = p.id
         LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id
-        WHERE am.mes = $1 AND am.anio = $2 AND am.total_atrasos_min > 0
+        WHERE am.mes = $1 AND am.anio = $2 AND am.total_atrasos_min > 0 ${unidadWhere}
         ORDER BY am.total_atrasos_min DESC
         LIMIT 10
       `, [targetMes, targetAnio]),
@@ -49,7 +62,7 @@ class DashboardService {
         JOIN asistencia_mensual am ON ad.asistencia_id = am.id
         JOIN personal p ON am.personal_id = p.id
         ${unidad ? 'LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id' : ''}
-        WHERE am.mes = $1 AND am.anio = $2 ${unidadWhere}
+        WHERE am.mes = $1 AND anio = $2 ${unidadWhere}
         GROUP BY ad.estado ORDER BY ad.estado
       `, [targetMes, targetAnio]),
       db.query(`
@@ -57,6 +70,7 @@ class DashboardService {
                COUNT(DISTINCT vl.personal_id) as value
         FROM vinculos_laborales vl
         JOIN personal p ON p.id = vl.personal_id
+        WHERE 1=1 ${unidadWhere}
         GROUP BY vl.unidad_servicio ORDER BY value DESC
       `),
       db.query(`
@@ -99,7 +113,7 @@ class DashboardService {
         JOIN asistencia_mensual am ON ad.asistencia_id = am.id
         JOIN personal p ON am.personal_id = p.id
         LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id
-        WHERE am.mes = $1 AND am.anio = $2
+        WHERE am.mes = $1 AND am.anio = $2 ${unidadWhere}
         GROUP BY p.id, vl.unidad_servicio
         HAVING COUNT(*) FILTER (WHERE ad.estado = 4 OR ad.estado = 9) > 0
         ORDER BY total_faltas DESC
@@ -107,12 +121,40 @@ class DashboardService {
       `, [targetMes, targetAnio]),
       db.query(`
         SELECT
-          (SELECT ROUND(SUM(total_horas)::numeric, 0) FROM asistencia_mensual WHERE mes = $1 AND anio = $2) as horas_actual,
-          (SELECT ROUND(SUM(total_horas)::numeric, 0) FROM asistencia_mensual WHERE mes = $1 - 1 AND anio = $2) as horas_anterior,
-          (SELECT SUM(total_atrasos_min) FROM asistencia_mensual WHERE mes = $1 AND anio = $2) as atrasos_actual,
-          (SELECT SUM(total_atrasos_min) FROM asistencia_mensual WHERE mes = $1 - 1 AND anio = $2) as atrasos_anterior,
-          (SELECT COUNT(*) FROM asistencia_diaria ad JOIN asistencia_mensual am ON ad.asistencia_id = am.id WHERE am.mes = $1 AND am.anio = $2 AND (ad.estado = 4 OR ad.estado = 9)) as faltas_actual,
-          (SELECT COUNT(*) FROM asistencia_diaria ad JOIN asistencia_mensual am ON ad.asistencia_id = am.id WHERE am.mes = $1 - 1 AND am.anio = $2 AND (ad.estado = 4 OR ad.estado = 9)) as faltas_anterior
+          (SELECT ROUND(SUM(am2.total_horas)::numeric, 0)
+           FROM asistencia_mensual am2
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 AND am2.anio = $2 ${unidadWhere.replace(/vl\./g, 'vl2.')}) as horas_actual,
+          (SELECT ROUND(SUM(am2.total_horas)::numeric, 0)
+           FROM asistencia_mensual am2
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 - 1 AND am2.anio = $2 ${unidadWhere.replace(/vl\./g, 'vl2.')}) as horas_anterior,
+          (SELECT SUM(am2.total_atrasos_min)
+           FROM asistencia_mensual am2
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 AND am2.anio = $2 ${unidadWhere.replace(/vl\./g, 'vl2.')}) as atrasos_actual,
+          (SELECT SUM(am2.total_atrasos_min)
+           FROM asistencia_mensual am2
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 - 1 AND am2.anio = $2 ${unidadWhere.replace(/vl\./g, 'vl2.')}) as atrasos_anterior,
+          (SELECT COUNT(*)
+           FROM asistencia_diaria ad2
+           JOIN asistencia_mensual am2 ON ad2.asistencia_id = am2.id
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 AND am2.anio = $2 AND (ad2.estado = 4 OR ad2.estado = 9)
+           ${unidadWhere.replace(/vl\./g, 'vl2.')}) as faltas_actual,
+          (SELECT COUNT(*)
+           FROM asistencia_diaria ad2
+           JOIN asistencia_mensual am2 ON ad2.asistencia_id = am2.id
+           JOIN personal p2 ON am2.personal_id = p2.id
+           ${unidad ? 'LEFT JOIN vinculos_laborales vl2 ON vl2.personal_id = p2.id' : ''}
+           WHERE am2.mes = $1 - 1 AND am2.anio = $2 AND (ad2.estado = 4 OR ad2.estado = 9)
+           ${unidadWhere.replace(/vl\./g, 'vl2.')}) as faltas_anterior
       `, [targetMes, targetAnio]),
       db.query(`
         SELECT COALESCE(vl.unidad_servicio, 'SIN ASIGNAR') as unidad,
@@ -125,7 +167,7 @@ class DashboardService {
         JOIN asistencia_mensual am ON ad.asistencia_id = am.id
         JOIN personal p ON am.personal_id = p.id
         LEFT JOIN vinculos_laborales vl ON vl.personal_id = p.id
-        WHERE am.mes = $1 AND am.anio = $2
+        WHERE am.mes = $1 AND am.anio = $2 ${unidadWhere}
         GROUP BY vl.unidad_servicio
         ORDER BY unidad
       `, [targetMes, targetAnio]),

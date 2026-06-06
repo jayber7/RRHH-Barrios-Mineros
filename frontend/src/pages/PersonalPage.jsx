@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import PersonalForm from '../components/PersonalForm';
 import HistorialModal from '../components/HistorialModal';
+import ContratosAlertasModal from '../components/ContratosAlertasModal';
 import ImportResultsModal from '../components/ImportResultsModal';
 import { API_BASE_URL } from '../config/api';
 
@@ -17,6 +18,7 @@ const PersonalPage = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
+  const [showContratosAlertas, setShowContratosAlertas] = useState(false);
   const [showImportResults, setShowImportResults] = useState(false);
   const [importResults, setImportResults] = useState(null);
   const [selectedPersonal, setSelectedPersonal] = useState(null);
@@ -180,6 +182,12 @@ const PersonalPage = () => {
           >
             <Upload size={18} /> Importar
           </button>
+          <button 
+            onClick={() => setShowContratosAlertas(true)}
+            className="flex items-center gap-2 bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors shadow-sm"
+          >
+            <AlertCircle size={18} /> Alertas de Contratos
+          </button>
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -315,10 +323,10 @@ const PersonalPage = () => {
                       <div className="flex justify-end gap-1">
                         <button 
                           onClick={() => { setSelectedPersonal(p); setShowHistorial(true); }}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                          title="Ver trayectoria laboral"
+                          className="flex items-center gap-1 px-2 py-1.5 text-xs text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                          title="Ver historial de movimientos laborales"
                         >
-                          <History size={18} />
+                          <History size={15} /> Historial
                         </button>
                         <button 
                           onClick={() => { setSelectedPersonal(p); setShowForm(true); }}
@@ -382,6 +390,12 @@ const PersonalPage = () => {
         <HistorialModal 
           personal={selectedPersonal}
           onClose={() => { setShowHistorial(false); setSelectedPersonal(null); }}
+        />
+      )}
+
+      {showContratosAlertas && (
+        <ContratosAlertasModal 
+          onClose={() => setShowContratosAlertas(false)}
         />
       )}
 

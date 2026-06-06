@@ -104,6 +104,27 @@ const getReporteSanciones = async (req, res) => {
   }
 };
 
+const getPlantillasPorDepartamento = async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT
+        COALESCE(cus.nombre_unidad, 'Sin departamento') as departamento,
+        tp.codigo as plantilla,
+        COUNT(DISTINCT vl.personal_id)::int as empleados,
+        COUNT(ta.id)::int as asignaciones
+      FROM vinculos_laborales vl
+      LEFT JOIN cat_unidades_servicios cus ON cus.id = vl.unidad_servicio_id
+      JOIN turnos_asignados ta ON ta.personal_id = vl.personal_id
+      JOIN turnos_plantilla tp ON tp.id = ta.turno_plantilla_id
+      GROUP BY cus.nombre_unidad, tp.codigo
+      ORDER BY departamento, empleados DESC, asignaciones DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getInventarioPersonal,
   getContratosPorVencer,
@@ -111,5 +132,6 @@ module.exports = {
   getReporteMensual,
   getPlanillaConsolidada,
   getReporteAtrasos,
-  getReporteSanciones
+  getReporteSanciones,
+  getPlantillasPorDepartamento
 };

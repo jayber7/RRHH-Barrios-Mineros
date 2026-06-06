@@ -10,5 +10,6 @@ router.get('/asistencia/mensual', ReporteController.getReporteMensual);
 router.get('/asistencia/planilla', ReporteController.getPlanillaConsolidada);
 router.get('/asistencia/atrasos', ReporteController.getReporteAtrasos);
 router.get('/asistencia/sanciones', ReporteController.getReporteSanciones);
+router.get('/plantillas-por-departamento', ReporteController.getPlantillasPorDepartamento);
 
 module.exports = router;

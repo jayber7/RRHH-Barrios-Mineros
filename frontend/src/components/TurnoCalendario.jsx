@@ -35,7 +35,7 @@ const TurnoCalendario = ({ plantillas }) => {
       if (servicio) params.set('servicio', servicio);
       const res = await fetch(`${API_BASE_URL}/api/turnos/calendario?${params}`);
       const d = await res.json();
-      setData(d);
+      setData(Array.isArray(d) ? d : []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };

@@ -3,13 +3,13 @@ const ConfiguracionService = require('./configuracionService');
 
 class TurnosService {
   static async getAllPlantillas(activo) {
-    let query = 'SELECT * FROM turnos_plantilla';
+    let query = 'SELECT tp.*, (SELECT COUNT(*) FROM turnos_asignados WHERE turno_plantilla_id = tp.id) as total_asignaciones FROM turnos_plantilla tp';
     const params = [];
     if (activo !== undefined) {
       params.push(activo === 'true');
-      query += ` WHERE activo = $${params.length}`;
+      query += ` WHERE tp.activo = $${params.length}`;
     }
-    query += ' ORDER BY codigo ASC';
+    query += ' ORDER BY total_asignaciones DESC, tp.codigo ASC';
     const { rows } = await db.query(query, params);
     return rows;
   }
@@ -109,9 +109,15 @@ class TurnosService {
     const params = [];
     const where = ['1=1'];
 
-    if (filtros.personal_id) {
-      params.push(filtros.personal_id);
-      where.push(`ta.personal_id = $${params.length}`);
+    if (filtros.q) {
+      params.push(`%${filtros.q}%`);
+      where.push(`(
+        p.primer_nombre ILIKE $${params.length} OR
+        p.apellido_paterno ILIKE $${params.length} OR
+        p.apellido_materno ILIKE $${params.length} OR
+        p.ci ILIKE $${params.length} OR
+        CAST(p.id AS TEXT) ILIKE $${params.length}
+      )`);
     }
     if (filtros.fecha) {
       params.push(filtros.fecha);
@@ -283,7 +289,8 @@ class TurnosService {
       WHERE (ta.fecha_inicio BETWEEN $1 AND $2 OR ta.fecha_fin BETWEEN $1 AND $2
              OR (ta.fecha_inicio <= $1 AND (ta.fecha_fin IS NULL OR ta.fecha_fin >= $2)))
     `;
-    const params = [`${anio}-${String(mes).padStart(2, '0')}-01`, `${anio}-${String(mes).padStart(2, '0')}-31`];
+    const ultimoDia = new Date(anio, mes, 0).getDate();
+    const params = [`${anio}-${String(mes).padStart(2, '0')}-01`, `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`];
 
     if (servicio) {
       params.push(`%${servicio}%`);

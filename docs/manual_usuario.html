@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario - Sistema RRHH Barrios Mineros</title>
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-dark: #1e40af;
+    --sidebar-bg: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #3b82f6;
+    --bg: #f8fafc;
+    --card-bg: #fff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #2563eb;
+    --code-bg: #f1f5f9;
+    --radius: 8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.6;
+    display: flex; min-height: 100vh;
+  }
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+    background: var(--sidebar-bg); color: var(--sidebar-text);
+    overflow-y: auto; z-index: 100;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 20px 16px; border-bottom: 1px solid #334155;
+    flex-shrink: 0;
+  }
+  .sidebar-header h1 { font-size: 15px; color: #fff; line-height: 1.3; }
+  .sidebar-header span { font-size: 12px; color: #94a3b8; display: block; margin-top: 4px; }
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+  .sidebar-nav a {
+    display: block; padding: 10px 16px; color: var(--sidebar-text);
+    text-decoration: none; font-size: 13px; border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar-nav a:hover, .sidebar-nav a.active {
+    background: #334155; color: #fff; border-left-color: var(--sidebar-active);
+  }
+  .sidebar-nav .section-label {
+    padding: 16px 16px 4px; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 1px; color: #64748b; font-weight: 600;
+  }
+  /* ── MAIN ── */
+  .main { margin-left: 280px; flex: 1; min-height: 100vh; max-width: 960px; padding: 40px 48px 80px; }
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { margin-left: 0; padding: 24px 16px; }
+    body { flex-direction: column; }
+    .sidebar-nav { display: none; }
+    .sidebar-nav.open { display: block; }
+    .menu-toggle { display: block !important; }
+  }
+  .menu-toggle {
+    display: none; background: none; border: none; color: #fff;
+    font-size: 24px; cursor: pointer; position: absolute; top: 16px; right: 16px;
+  }
+  /* ── CONTENT ── */
+  .hero {
+    margin-bottom: 40px; padding-bottom: 32px;
+    border-bottom: 2px solid var(--border);
+  }
+  .hero h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .hero p { color: var(--text-muted); font-size: 15px; max-width: 640px; }
+  .module {
+    margin-bottom: 48px; scroll-margin-top: 80px;
+  }
+  .module-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-header h3 {
+    font-size: 22px; font-weight: 700; flex: 1;
+  }
+  .module-header .badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .badge-admin { background: #fee2e2; color: #991b1b; }
+  .badge-all { background: #dbeafe; color: #1e40af; }
+  .badge-manager { background: #fef3c7; color: #92400e; }
+  .badge-rrhh { background: #d1fae5; color: #065f46; }
+  .module-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; padding: 12px 16px; background: var(--code-bg); border-radius: var(--radius); }
+  /* ── EXAMPLE CARD ── */
+  .example {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+  }
+  .example h4 {
+    font-size: 16px; font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .example h4::before { content: ''; width: 4px; height: 20px; background: var(--primary); border-radius: 2px; }
+  .step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+  .step-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--primary); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .step-body { flex: 1; font-size: 14px; }
+  .step-body strong { color: var(--primary-dark); }
+  .step-body code {
+    background: var(--code-bg); padding: 1px 6px; border-radius: 4px;
+    font-size: 13px; font-family: 'SF Mono', Consolas, monospace;
+  }
+  .result-box {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius);
+    padding: 12px 16px; margin: 12px 0 16px; font-size: 14px;
+  }
+  .result-box::before { content: 'Resultado: '; font-weight: 600; color: var(--success); }
+  /* ── ROLES TABLE ── */
+  .roles-table { margin: 16px 0 20px; }
+  .roles-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .roles-table th, .roles-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .roles-table th { background: var(--code-bg); font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  .roles-table tr:hover td { background: #f8fafc; }
+  .roles-table .role-yes { color: var(--success); font-weight: 600; }
+  .roles-table .role-no { color: #cbd5e1; }
+  /* ── TIP ── */
+  .tip {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius);
+    padding: 12px 16px; font-size: 13px; margin: 16px 0;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .tip::before { content: '💡'; font-size: 16px; flex-shrink: 0; }
+  .warning-note {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius);
+    padding: 12px 16px; font-size: 13px; margin: 16px 0;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .warning-note::before { content: '⚠️'; font-size: 16px; flex-shrink: 0; }
+  /* ── ACTIONS TABLE ── */
+  .actions-table { margin: 16px 0; }
+  .actions-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .actions-table th, .actions-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .actions-table th { background: var(--code-bg); font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  .actions-table .method { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
+  .method-get { background: #16a34a; }
+  .method-post { background: #2563eb; }
+  .method-put { background: #d97706; }
+  .method-delete { background: #dc2626; }
+  /* ── FOOTER ── */
+  .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); text-align: center; }
+  /* ── SCROLLBAR ── */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()">☰</button>
+    <h1>Manual de Usuario</h1>
+    <span>Sistema RRHH · Hospital Barrios Mineros</span>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <a href="#intro" class="active">1. Introducción</a>
+    <a href="#dashboard">2. Dashboard</a>
+    <a href="#personal">3. Gestión de Personal</a>
+    <a href="#asistencia">4. Control de Asistencia</a>
+    <a href="#biometrico">5. Dispositivo Biométrico</a>
+    <a href="#turnos">6. Gestión de Turnos</a>
+    <a href="#vacaciones">7. Vacaciones</a>
+    <a href="#permisos">8. Permisos y Licencias</a>
+    <a href="#certificados">9. Certificados</a>
+    <a href="#correspondencia">10. Correspondencia</a>
+    <a href="#comunicados">11. Comunicados Internos</a>
+    <a href="#reportes">12. Reportes</a>
+    <a href="#notificaciones">13. Notificaciones</a>
+    <a href="#sanciones">14. Sanciones</a>
+    <a href="#configuracion">15. Configuración del Sistema</a>
+    <a href="#tareas">16. Tareas Automatizadas</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<div class="main">
+
+  <div class="hero">
+    <h2>📋 Manual de Usuario</h2>
+    <p>Sistema de Gestión de Recursos Humanos del Hospital Barrios Mineros. Guía práctica con ejemplos paso a paso para cada funcionalidad.</p>
+  </div>
+
+  <!-- ──── 1. INTRODUCCIÓN ──── -->
+  <section class="module" id="intro">
+    <div class="module-header">
+      <h3>1. Introducción y Acceso al Sistema</h3>
+      <span class="badge badge-all">Todos los roles</span>
+    </div>
+    <div class="module-desc">
+      El sistema RRHH permite gestionar personal, control de asistencia, turnos, vacaciones, permisos, certificados, correspondencia y más. Está diseñado para el Hospital Barrios Mineros con 5 roles de acceso.
+    </div>
+
+    <div class="example">
+      <h4>Acceder al sistema</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Abra su navegador y vaya a la dirección del sistema (ej: <code>http://localhost:5173</code> en desarrollo).</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Ingrese su <strong>nombre de usuario</strong> y <strong>contraseña</strong>. Si es la primera vez, su contraseña es su número de CI (cédula de identidad).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en <strong>Ingresar</strong>.</div></div>
+      <div class="result-box">Será redirigido al Dashboard principal con los indicadores del mes actual.</div>
+      <div class="tip">Si es su primer ingreso, el sistema le pedirá cambiar la contraseña obligatoriamente.</div>
+    </div>
+
+    <div class="example">
+      <h4>Entender el panel lateral (Sidebar)</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">A la izquierda verá el menú de navegación con todos los módulos disponibles.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">El badge rojo sobre el icono de campana indica <strong>notificaciones no leídas</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Los módulos visibles dependen de su <strong>rol</strong>. Un rol ADMIN ve todo; un AUXILIAR ve menos opciones.</div></div>
+      <div class="tip">El sidebar se actualiza automáticamente cada 30 segundos para mostrar nuevas notificaciones.</div>
+    </div>
+
+    <div class="roles-table">
+      <table>
+        <tr><th>Rol</th><th>Acceso</th></tr>
+        <tr><td>ADMIN</td><td>Acceso total a todas las funcionalidades del sistema</td></tr>
+        <tr><td>DIRECTOR</td><td>Dashboard, reportes, correspondencia (derivar/responder), comunicados</td></tr>
+        <tr><td>JEFE_RRHH</td><td>Gestión completa de personal, asistencia, turnos, vacaciones, permisos, reportes</td></tr>
+        <tr><td>SECRETARIO</td><td>Personal, correspondencia (crear/editar), comunicados, reportes</td></tr>
+        <tr><td>AUXILIAR</td><td>Consultas, reportes básicos, correspondencia (derivar/responder)</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Cambiar su contraseña</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Haga clic en su nombre de usuario (esquina superior derecha) y seleccione <strong>Cambiar Contraseña</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Ingrese su <strong>contraseña actual</strong>, la <strong>nueva contraseña</strong> y la <strong>confirmación</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en <strong>Guardar</strong>.</div></div>
+      <div class="result-box">Su sesión se mantiene activa con la nueva contraseña.</div>
+    </div>
+  </section>
+
+  <!-- ──── 2. DASHBOARD ──── -->
+  <section class="module" id="dashboard">
+    <div class="module-header">
+      <h3>2. Dashboard — Panel de Control</h3>
+      <span class="badge badge-all">Todos los roles</span>
+    </div>
+    <div class="module-desc">
+      El Dashboard muestra indicadores clave (KPIs) del mes: total de personal, atrasos, horas trabajadas, empleados nocturnos, tasa de ausentismo, distribución por tipo y unidad, top de atrasos/faltas, y tendencias mensuales.
+    </div>
+
+    <div class="example">
+      <h4>Interpretar los indicadores del Dashboard</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Al ingresar, los indicadores superiores muestran: <strong>Total Personal</strong>, <strong>Atrasos</strong>, <strong>Horas Totales</strong>, <strong>Nocturnos</strong>, <strong>Ausentismo</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Debajo, un <strong>comparativo mes actual vs anterior</strong> muestra si los indicadores mejoraron o empeoraron.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Los gráficos circulares muestran: <strong>Distribución por Tipo de Personal</strong> (ITEM, CONTRATO, CONSULTORÍA) y <strong>Estados Diarios</strong> (Normal, Atraso, Falta, etc.).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Las tablas <strong>Top 10 Atrasos</strong> y <strong>Top 10 Faltas</strong> listan a los empleados con más incidencias.</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">El <strong>gráfico de tendencia mensual</strong> muestra la evolución de horas y atrasos a lo largo del año.</div></div>
+      <div class="tip">Use los filtros de mes y año si están disponibles para cambiar el período del Dashboard.</div>
+    </div>
+
+    <div class="example">
+      <h4>Consultar el detalle diario de un empleado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En el Dashboard, busque un empleado en el campo de <strong>Detalle Diario</strong> (esquina inferior o sección específica).</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione una <strong>fecha</strong> y haga clic en <strong>Consultar</strong>.</div></div>
+      <div class="result-box">Verá: el turno del empleado, sus marcaciones biométricas (hora de entrada/salida), y el estado de asistencia calculado para ese día.</div>
+      <div class="tip">Use esto para verificar por qué un empleado tiene un atraso o falta registrada.</div>
+    </div>
+  </section>
+
+  <!-- ──── 3. GESTIÓN DE PERSONAL ──── -->
+  <section class="module" id="personal">
+    <div class="module-header">
+      <h3>3. Gestión de Personal</h3>
+      <span class="badge badge-manager">ADMIN · JEFE_RRHH · SECRETARIO</span>
+    </div>
+    <div class="module-desc">
+      Permite registrar, editar, buscar, importar y exportar empleados. Cada empleado tiene: datos personales, vínculo laboral (fuente, tipo, unidad), contratos con fechas y haberes, e historial de movimientos.
+    </div>
+
+    <div class="example">
+      <h4>Registrar un nuevo empleado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Personal → Agregar Personal</strong> (botón superior derecho en la tabla).</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Complete los datos personales: <strong>CI</strong> (ej: 1234567), <strong>Expedición</strong> (LP), <strong>Nombres</strong> (JUAN CARLOS), <strong>Apellido Paterno</strong> (PEREZ), <strong>Apellido Materno</strong> (GARCIA), <strong>Fecha de Nacimiento</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">En la sección <strong>Vínculo Laboral</strong>, seleccione: <strong>Fuente</strong> (TGN), <strong>Tipo</strong> (ITEM), <strong>Establecimiento</strong> (HBM), <strong>Unidad/Servicio</strong> (MEDICINA INTERNA).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Si tiene contrato, complete: <strong>Fecha Inicio</strong>, <strong>Fecha Fin</strong> (si es contratado), <strong>Haber Básico</strong> (ej: 4500.00).</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Haga clic en <strong>Guardar</strong>.</div></div>
+      <div class="result-box">El empleado aparece en la tabla de personal. Se crea automáticamente un usuario con contraseña igual al CI. Se registra un movimiento en el historial.</div>
+      <div class="tip">Use la búsqueda por nombre, CI o item para localizar empleados rápidamente. La tabla se puede ordenar por cualquier columna.</div>
+    </div>
+
+    <div class="example">
+      <h4>Importar personal desde Excel</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Personal, haga clic en <strong>Importar Excel</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el archivo Excel con los datos del personal.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">El sistema detecta automáticamente las columnas del archivo y le pide que <strong>mapee cada columna</strong> (ej: columna A → CI, columna B → Nombres, etc.).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Confirme el mapeo y haga clic en <strong>Importar</strong>.</div></div>
+      <div class="result-box">Un modal muestra el resumen: cuántos se importaron correctamente y cuántos tuvieron errores (duplicados, datos inválidos).</div>
+      <div class="warning-note">El archivo Excel debe tener una fila de encabezado. El sistema no modifica empleados existentes, solo crea nuevos.</div>
+    </div>
+
+    <div class="example">
+      <h4>Exportar personal a Excel</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Personal, haga clic en <strong>Exportar Excel</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione los filtros deseados (Estado: ACTIVO, Fuente: TGN, etc.) o deje los valores por defecto.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en <strong>Exportar</strong>.</div></div>
+      <div class="result-box">Se descarga un archivo Excel con todos los empleados que cumplen los filtros.</div>
+    </div>
+
+    <div class="example">
+      <h4>Consultar historial de movimientos</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la tabla de Personal, localice al empleado y en la columna <strong>Acciones</strong> haga clic en el botón <strong>Historial</strong> (icono ⏳).</div></div>
+      <div class="result-box">Se abre un modal con la línea de tiempo de cambios: creación, actualizaciones de datos, cambios de fuente, tipo, unidad, etc.</div>
+    </div>
+
+    <div class="example">
+      <h4>Gestionar contratos próximos a vencer</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Personal, haga clic en el botón <strong>Alertas de Contratos</strong> (icono ⚠️, color rojo) en la barra de acciones superior.</div></div>
+      <div class="result-box">Se abre un modal mostrando: <strong>Contratos Vencidos</strong> (con días de atraso) y <strong>Próximos a Vencer</strong> (con cuenta regresiva). También muestra tarjetas con estadísticas: vencidos, por vencer y activos.</div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Si hay personal con contrato vencido, aparecerá la sección <strong>Auto-inactivar personal</strong>. Haga clic en ese botón para abrir la confirmación.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Revise la cantidad de empleados que serán inactivados y confirme haciendo clic en <strong>Confirmar Inactivación</strong>.</div></div>
+      <div class="result-box">Los empleados seleccionados cambian a estado INACTIVO con fecha de baja registrada. La lista de alertas se actualiza automáticamente.</div>
+      <div class="tip">Esta inactivación también se ejecuta automáticamente cada día a la 01:00 AM mediante una tarea programada.</div>
+    </div>
+  </section>
+
+  <!-- ──── 4. CONTROL DE ASISTENCIA ──── -->
+  <section class="module" id="asistencia">
+    <div class="module-header">
+      <h3>4. Control de Asistencia</h3>
+      <span class="badge badge-manager">ADMIN · JEFE_RRHH · SECRETARIO</span>
+    </div>
+    <div class="module-desc">
+      Permite importar planillas de asistencia desde Excel, calcular estados diarios (Normal, Atraso, Falta, Justificado, etc.), ver detalle por empleado y justificar inasistencias. El motor de cálculo combina el turno del empleado, las marcaciones biométricas y las tolerancias configuradas.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Acción</th><th>Descripción</th></tr>
+        <tr><td><span class="method method-post">Importar</span></td><td>Subir planilla Excel de asistencia (detecta automáticamente si es RESIDENTE o MINISTERIAL)</td></tr>
+        <tr><td><span class="method method-post">Calcular</span></td><td>Calcular estados de asistencia para un empleado en un mes específico</td></tr>
+        <tr><td><span class="method method-post">Calcular Todos</span></td><td>Calcular asistencia de todos los empleados para un mes</td></tr>
+        <tr><td><span class="method method-put">Editar Estado</span></td><td>Cambiar manualmente el estado de un día específico</td></tr>
+        <tr><td><span class="method method-get">Detalle</span></td><td>Ver el detalle diario de un registro mensual (cada día con su estado y marcaciones)</td></tr>
+        <tr><td><span class="method method-get">Sanción</span></td><td>Calcular la sanción estimada para un empleado según sus atrasos/faltas</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Importar planilla de asistencia mensual</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Asistencia → Importar</strong> (o el botón de importación en la página de Asistencias).</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el archivo Excel (<strong>.xlsx</strong>) de la planilla. El sistema detecta si es formato <strong>RESIDENTE</strong> o <strong>MINISTERIAL</strong> automáticamente.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Verifique el <strong>mes</strong> y <strong>año</strong> detectados y confirme la importación.</div></div>
+      <div class="result-box">El sistema registra las asistencias y muestra un resumen: empleados procesados, días importados, errores encontrados.</div>
+      <div class="tip">Si la planilla tiene un formato diferente al esperado, use la opción de mapeo manual de columnas.</div>
+    </div>
+
+    <div class="example">
+      <h4>Calcular la asistencia de un empleado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Asistencia, busque al empleado por nombre o CI.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>mes</strong> y <strong>año</strong> y haga clic en <strong>Calcular</strong> (o en el icono de cálculo junto al empleado).</div></div>
+      <div class="result-box">El sistema calcula el estado de cada día del mes basado en: turno asignado → marcaciones biométricas → tolerancias configuradas. Muestra el consolidado mensual.</div>
+    </div>
+
+    <div class="example">
+      <h4>Calcular asistencia de TODOS los empleados</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Asistencia, haga clic en <strong>Calcular Todos</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>mes</strong> y <strong>año</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Confirme la operación (esto puede tomar varios segundos dependiendo de la cantidad de empleados).</div></div>
+      <div class="result-box">Todos los empleados con turno asignado y marcaciones biométricas tendrán su asistencia calculada para el mes seleccionado.</div>
+      <div class="tip">También hay un cálculo automático diario a las 06:00 AM que procesa el día anterior.</div>
+    </div>
+
+    <div class="example">
+      <h4>Ver detalle diario y editar estado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la tabla de Asistencia, haga clic en un empleado para ver su <strong>Detalle Mensual</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Cada día del mes muestra: <strong>N°</strong> (1=Normal, 2=Atraso, 3=Justificado, 4=Falta, etc.), <strong>minutos de atraso</strong> y <strong>marcaciones</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Para corregir un día, haga clic en el estado y seleccione el nuevo valor (ej: cambiar de Falta a Justificado).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Si elige <strong>Justificado</strong>, seleccione un <strong>motivo</strong> del catálogo (Ej: "CON PERMISO", "CALAMIDAD", "ENFERMEDAD").</div></div>
+      <div class="result-box">El estado del día se actualiza y se registra en la auditoría de asistencia.</div>
+    </div>
+
+    <div class="example">
+      <h4>Justificar inasistencias</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a la página de <strong>Justificaciones</strong> o desde el detalle diario, haga clic en <strong>Justificar</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>empleado</strong>, <strong>fecha(s)</strong>, <strong>tipo</strong> y <strong>motivo</strong> de justificación.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Opcionalmente, agregue un <strong>comentario</strong> (ej: "Presentó certificado médico").</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Guarde la justificación.</div></div>
+      <div class="result-box">El estado diario del empleado cambia a 3-Justificado automáticamente. Si elimina la justificación, se restaura el estado anterior.</div>
+    </div>
+  </section>
+
+  <!-- ──── 5. DISPOSITIVO BIOMÉTRICO ──── -->
+  <section class="module" id="biometrico">
+    <div class="module-header">
+      <h3>5. Dispositivo Biométrico</h3>
+      <span class="badge badge-manager">ADMIN · JEFE_RRHH</span>
+    </div>
+    <div class="module-desc">
+      Gestión del reloj biométrico ZKTeco: configuración de conexión, sincronización de marcaciones, importación manual, validación de datos y visualización de logs crudos.
+    </div>
+
+    <div class="example">
+      <h4>Configurar el dispositivo biométrico</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Biométrico → Dispositivo</strong> (primera pestaña).</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Configure los parámetros de conexión: <strong>Dirección IP</strong> (ej: 192.168.1.100), <strong>Puerto</strong> (4370), <strong>Clave de Comunicación</strong> (comms_key).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en <strong>Guardar Configuración</strong>.</div></div>
+      <div class="result-box">La configuración se guarda y queda disponible para las operaciones de sincronización.</div>
+    </div>
+
+    <div class="example">
+      <h4>Sincronizar marcaciones desde el dispositivo</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la pestaña <strong>Dispositivo</strong>, haga clic en <strong>Sincronizar Logs</strong>.</div></div>
+      <div class="result-box">El sistema se conecta al ZKTeco, descarga todas las marcaciones pendientes y las almacena en la tabla <code>biometrico_logs_raw</code>. Muestra la cantidad de registros obtenidos.</div>
+      <div class="tip">También puede usar <strong>Sincronizar Usuarios</strong> para obtener la lista de usuarios registrados en el dispositivo.</div>
+    </div>
+
+    <div class="example">
+      <h4>Importar marcaciones manualmente</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la pestaña <strong>Importar</strong> (o <strong>Marcaciones</strong>), haga clic en <strong>Importar Marcas</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Pegue un arreglo JSON con las marcas (ej: <code>[{"uid":1,"fecha":"2026-04-01","hora":"08:05:00"}]</code>) o seleccione un archivo.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Confirme la importación.</div></div>
+      <div class="result-box">Las marcas se registran en el sistema y quedan listas para las validaciones y el cálculo de asistencia.</div>
+    </div>
+
+    <div class="example">
+      <h4>Validar marcaciones (5 reglas)</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la pestaña <strong>Validaciones</strong>, haga clic en <strong>Ejecutar Validaciones</strong>.</div></div>
+      <div class="result-box">El sistema aplica 5 reglas y muestra los resultados:</div>
+      <div style="margin: 8px 0 0 38px; font-size: 14px;">
+        <strong>1. Marcas sin personal:</strong> Logs biométricos que no tienen empleado vinculado → posible huella sin registrar.<br>
+        <strong>2. Marcas duplicadas:</strong> Misma persona con marcas en menos de 5 minutos → probable error.<br>
+        <strong>3. Marcas fuera de horario:</strong> Marcaciones que no corresponden al turno asignado.<br>
+        <strong>4. Días sin marcación:</strong> Empleados con turno activo pero sin marcas ese día.<br>
+        <strong>5. Tres o más marcas:</strong> Empleados con 3+ marcaciones en un mismo día.
+      </div>
+      <div class="tip">Use estas validaciones para detectar problemas antes de calcular la asistencia. Corrija los errores y vuelva a calcular.</div>
+    </div>
+
+    <div class="example">
+      <h4>Ver logs crudos del dispositivo</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la pestaña <strong>Marcaciones</strong>, seleccione <strong>Logs Crudos</strong>.</div></div>
+      <div class="result-box">Ve los últimos 100 registros biométricos con: UID, fecha, hora, empleado (si está vinculado).</div>
+    </div>
+
+    <div class="example">
+      <h4>Recalcular asistencia desde marcaciones</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Después de sincronizar/importar marcas, vaya a <strong>Biométrico → Recalcular</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione <strong>Por empleado</strong> (específico) o <strong>Masivo</strong> (todos los empleados).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>mes</strong> y <strong>año</strong> y confirme.</div></div>
+      <div class="result-box">El sistema recalcula los estados de asistencia usando las nuevas marcaciones biométricas.</div>
+    </div>
+  </section>
+
+  <!-- ──── 6. GESTIÓN DE TURNOS ──── -->
+  <section class="module" id="turnos">
+    <div class="module-header">
+      <h3>6. Gestión de Turnos</h3>
+      <span class="badge badge-rrhh">ADMIN · JEFE_RRHH</span>
+    </div>
+    <div class="module-desc">
+      Administración de plantillas de horario y asignación de turnos a empleados. Cada plantilla define horarios de entrada/salida por día de la semana, tolerancias, bandera nocturna y prioridad. Actualmente hay 87 plantillas y más de 23,000 asignaciones.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Acción</th><th>Descripción</th></tr>
+        <tr><td><span class="method method-get">Plantillas</span></td><td>Listar todas las plantillas con su conteo de asignaciones</td></tr>
+        <tr><td><span class="method method-post">Crear Plantilla</span></td><td>Crear una nueva plantilla con horarios por día</td></tr>
+        <tr><td><span class="method method-put">Editar Plantilla</span></td><td>Modificar horarios, tolerancias o prioridad</td></tr>
+        <tr><td><span class="method method-delete">Eliminar Plantilla</span></td><td>Eliminar plantilla (solo si no tiene asignaciones activas)</td></tr>
+        <tr><td><span class="method method-post">Asignar Turno</span></td><td>Asignar una plantilla a un empleado por un período</td></tr>
+        <tr><td><span class="method method-get">Calendario</span></td><td>Ver calendario visual de turnos por mes y servicio</td></tr>
+        <tr><td><span class="method method-get">Sin Turno</span></td><td>Listar empleados sin asignación de turno</td></tr>
+        <tr><td><span class="method method-post">Clonar</span></td><td>Copiar asignaciones de un año a otro</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Crear una plantilla de turno</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Turnos → Plantillas</strong> y haga clic en <strong>Nueva Plantilla</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Asigne un <strong>código</strong> (ej: <code>08:00-14:00</code>) y una <strong>descripción</strong> opcional.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Configure los horarios para cada día de la semana:</div>
+      <div style="margin: 8px 0 0 38px; font-size: 14px;">
+        ✅ <strong>Lunes a Viernes:</strong> Entrada 08:00, Salida 14:00<br>
+        ✅ Marcar como <strong>Habilitado</strong> en esos días<br>
+        ✅ <strong>Sábado y Domingo:</strong> Desmarcar "Habilitado"<br>
+        ⚙️ <strong>Tolerancia de atraso:</strong> 5 minutos<br>
+        ⚙️ <strong>Tolerancia de falta:</strong> 30 minutos<br>
+        ⚙️ <strong>Nocturno:</strong> No (es turno diurno)
+      </div>
+    </div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Haga clic en <strong>Guardar</strong>.</div></div>
+      <div class="result-box">La plantilla aparece en la lista con código <code>08:00-14:00</code> y se puede asignar a empleados.</div>
+    </div>
+
+    <div class="example">
+      <h4>Asignar turno a un empleado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Turnos → Asignaciones</strong> y haga clic en <strong>Nueva Asignación</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>empleado</strong> (busque por nombre o CI).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione la <strong>plantilla</strong> (ej: <code>08:00-14:00</code>).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Defina el período: <strong>Fecha Inicio</strong> (ej: 2026-04-01) y <strong>Fecha Fin</strong> (ej: 2026-04-30).</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Haga clic en <strong>Asignar</strong>.</div></div>
+      <div class="result-box">El empleado queda con turno asignado para todo abril 2026. Aparece en el calendario y en los cálculos de asistencia.</div>
+    </div>
+
+    <div class="example">
+      <h4>Ver el calendario de turnos</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Turnos → Calendario</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>mes</strong> (Abril), <strong>año</strong> (2026) y opcionalmente un <strong>servicio</strong> (ej: MEDICINA INTERNA).</div></div>
+      <div class="result-box">Verá un calendario mensual donde cada empleado tiene su turno coloreado por día. Puede identificar rápidamente quién trabaja cada día y en qué horario.</div>
+    </div>
+
+    <div class="example">
+      <h4>Clonar asignaciones de un año a otro</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Turnos → Clonar</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>año origen</strong> (ej: 2025) y el <strong>año destino</strong> (ej: 2026).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Confirme la clonación.</div></div>
+      <div class="result-box">Todas las asignaciones del año origen se copian al año destino con las mismas plantillas y empleados, pero con las fechas actualizadas al nuevo año.</div>
+      <div class="tip">Útil para planificar turnos anuales. Las asignaciones existentes en el año destino no se duplican.</div>
+    </div>
+
+    <div class="example">
+      <h4>Identificar personal sin turno</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Turnos → Personal sin Turno</strong>.</div></div>
+      <div class="result-box">Lista de empleados activos que no tienen ninguna asignación de turno. Puede asignarles turno directamente desde esta vista.</div>
+    </div>
+  </section>
+
+  <!-- ──── 7. VACACIONES ──── -->
+  <section class="module" id="vacaciones">
+    <div class="module-header">
+      <h3>7. Vacaciones</h3>
+      <span class="badge badge-all">Todos los roles (según permiso)</span>
+    </div>
+    <div class="module-desc">
+      Gestión de solicitudes de vacaciones con control de saldo (15 días por gestión). Los empleados solicitan, los jefes aprueban/rechazan. El sistema notifica automáticamente los cambios de estado.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Estado</th><th>Significado</th></tr>
+        <tr><td>PENDIENTE</td><td>Solicitud creada, esperando aprobación</td></tr>
+        <tr><td>APROBADO</td><td>Aprobado por el jefe, el empleado puede tomar las vacaciones</td></tr>
+        <tr><td>RECHAZADO</td><td>Rechazado por el jefe (con motivo opcional)</td></tr>
+        <tr><td>GOZADO</td><td>Vacaciones ya tomadas (marcado después de que pasen las fechas)</td></tr>
+        <tr><td>ANULADO</td><td>Anulado por el usuario o administrador</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Consultar saldo de vacaciones</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Vacaciones</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Busque al empleado por nombre o CI y haga clic en <strong>Consultar Saldo</strong>.</div></div>
+      <div class="result-box">Muestra: Días disponibles por gestión (15), días solicitados (pendientes + aprobados), días gozados, días disponibles actuales.</div>
+    </div>
+
+    <div class="example">
+      <h4>Solicitar vacaciones (como empleado/jefe)</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Vacaciones → Nueva Solicitud</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>empleado</strong> y las <strong>fechas</strong> (inicio y fin).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">El sistema valida automáticamente el <strong>saldo disponible</strong> (no permite solicitar más días de los disponibles).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Agregue un <strong>comentario</strong> opcional y guarde.</div></div>
+      <div class="result-box">La solicitud queda en estado PENDIENTE. Se notifica a los usuarios con rol ADMIN y JEFE_RRHH.</div>
+    </div>
+
+    <div class="example">
+      <h4>Aprobar o rechazar una solicitud de vacaciones</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Vacaciones, ubique la solicitud en estado PENDIENTE.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en <strong>Aprobar</strong> o <strong>Rechazar</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Si rechaza, ingrese un <strong>motivo</strong> (ej: "Personal insuficiente en esas fechas").</div></div>
+      <div class="result-box">El estado cambia. Se notifica al empleado automáticamente sobre la decisión.</div>
+    </div>
+
+    <div class="example">
+      <h4>Marcar vacaciones como gozadas</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Una vez que el empleado tomó las vacaciones (fechas ya pasaron), busque la solicitud APROBADA.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Cambie el estado a <strong>GOZADO</strong>.</div></div>
+      <div class="result-box">Los días se descuentan del saldo del empleado para la gestión actual.</div>
+    </div>
+
+    <div class="tip">
+      El resumen de vacaciones muestra: total de solicitudes, pendientes, aprobadas y gozados del mes/año actual. Útil para tener una visión rápida de las ausencias programadas.
+    </div>
+  </section>
+
+  <!-- ──── 8. PERMISOS Y LICENCIAS ──── -->
+  <section class="module" id="permisos">
+    <div class="module-header">
+      <h3>8. Permisos y Licencias</h3>
+      <span class="badge badge-all">Todos los roles (según permiso)</span>
+    </div>
+    <div class="module-desc">
+      Gestión de 21 tipos de permisos laborales (VACACIÓN, BAJA_MÉDICA, COMISIÓN, FERIADO, TOLERANCIA, etc.). Los permisos pueden tener origen ASIS (importados del sistema legacy) o MANUAL (creados en el sistema actual). El sistema notifica automáticamente los cambios de estado.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Estado</th><th>Significado</th></tr>
+        <tr><td>PENDIENTE</td><td>Solicitud creada, esperando aprobación</td></tr>
+        <tr><td>APROBADO</td><td>Aprobado por el jefe</td></tr>
+        <tr><td>RECHAZADO</td><td>Rechazado por el jefe</td></tr>
+        <tr><td>FINALIZADO</td><td>Permiso ya concluido</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Registrar un permiso por comisión</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Permisos → Nuevo Permiso</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>empleado</strong> (busque por nombre o CI).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>tipo de permiso</strong> (COMISIÓN).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Defina las <strong>fechas</strong>: inicio (2026-04-10), fin (2026-04-11), hora inicio (08:00), hora fin (18:00).</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Seleccione <strong>origen</strong> MANUAL. Agregue un <strong>comentario</strong> (ej: "Comisión a Tarija para capacitación").</div></div>
+      <div class="step"><span class="step-num">6</span><div class="step-body">Guarde.</div></div>
+      <div class="result-box">El permiso queda PENDIENTE. Se notifica a ADMIN y JEFE_RRHH para aprobación.</div>
+    </div>
+
+    <div class="example">
+      <h4>Aprobar un permiso</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Permisos, ubique el permiso en estado PENDIENTE.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en <strong>Aprobar</strong> (icono ✓) o <strong>Rechazar</strong> (icono ✗).</div></div>
+      <div class="result-box">Se notifica al empleado. Si se aprueba, el estado cambia a APROBADO.</div>
+    </div>
+
+    <div class="example">
+      <h4>Ver estadísticas de permisos</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Permisos, haga clic en <strong>Estadísticas</strong>.</div></div>
+      <div class="result-box">Muestra la cantidad de permisos agrupados por tipo en el mes/año seleccionado. Útil para identificar qué tipo de permiso es más frecuente.</div>
+    </div>
+  </section>
+
+  <!-- ──── 9. CERTIFICADOS ──── -->
+  <section class="module" id="certificados">
+    <div class="module-header">
+      <h3>9. Certificados</h3>
+      <span class="badge badge-all">Todos los roles</span>
+    </div>
+    <div class="module-desc">
+      Generación automática de certificados laborales en PDF con membrete del hospital. Tipos: TRABAJO, INGRESOS, ANTIGÜEDAD, ASISTENCIA. Numeración secuencial (CERT-2026-XXXX).
+    </div>
+
+    <div class="example">
+      <h4>Generar un certificado de trabajo</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Certificados → Generar Certificado</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione el <strong>empleado</strong> (ej: JUAN PEREZ GARCIA).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>tipo</strong> de certificado: TRABAJO.</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Si es necesario, ajuste la <strong>fecha de emisión</strong>.</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Haga clic en <strong>Generar</strong>.</div></div>
+      <div class="result-box">El certificado se genera en PDF y se guarda en el sistema con estado GENERADO. Se puede descargar inmediatamente.</div>
+    </div>
+
+    <div class="example">
+      <h4>Descargar un certificado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Certificados, busque el certificado deseado.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en el <strong>icono de descarga</strong> (⬇) o en <strong>Ver PDF</strong>.</div></div>
+      <div class="result-box">El PDF se descarga con el formato oficial: membrete del hospital Barrios Mineros, datos del empleado, numeración CERT-2026-XXXX, firma digital.</div>
+    </div>
+
+    <div class="example">
+      <h4>Cambiar estado de un certificado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la lista de certificados, haga clic en el certificado.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Cambie el estado: <strong>ENTREGADO</strong> (cuando se entrega físicamente) o <strong>ANULADO</strong> (si se emitió por error).</div></div>
+      <div class="result-box">El certificado cambia de estado. Los certificados ANULADOS mantienen el PDF pero no son válidos.</div>
+    </div>
+
+    <div class="tip">
+      El resumen de certificados muestra cuántos se generaron, entregaron y anularon en el período. La numeración es secuencial automática por gestión.
+    </div>
+  </section>
+
+  <!-- ──── 10. CORRESPONDENCIA ──── -->
+  <section class="module" id="correspondencia">
+    <div class="module-header">
+      <h3>10. Correspondencia</h3>
+      <span class="badge badge-manager">ADMIN · SECRETARIO · DIRECTOR · JEFE_RRHH · AUXILIAR</span>
+    </div>
+    <div class="module-desc">
+      Gestión documental: registro de documentos con numeración HR (Hoja de Ruta), adjuntar PDF, etiquetas de color, derivación a otros usuarios con instrucciones, y respuesta a derivaciones. 
+      <strong>Solo ADMIN y SECRETARIO pueden crear/editar documentos.</strong>
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Acción</th><th>Roles</th><th>Descripción</th></tr>
+        <tr><td>Crear correspondencia</td><td>ADMIN, SECRETARIO</td><td>Registrar documento con PDF adjunto y etiquetas</td></tr>
+        <tr><td>Derivar</td><td>Todos excepto AUXILIAR</td><td>Enviar documento a otro usuario con instrucciones</td></tr>
+        <tr><td>Responder derivación</td><td>Todos</td><td>Responder a una derivación recibida</td></tr>
+        <tr><td>Ver bandeja</td><td>Todos</td><td>Ver derivaciones pendientes de respuesta</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Crear una nueva correspondencia (ADMIN/SECRETARIO)</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Correspondencia → Nueva</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Complete: <strong>Remitente</strong> (ej: "Ministerio de Salud"), <strong>Destinatario</strong> (ej: "Dirección HBM"), <strong>Asunto</strong> (ej: "Solicitud de informe de personal").</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>tipo</strong> (NOTA, OFICIO, MEMORANDUM, etc.) y <strong>clasificación</strong> (INTERNO, EXTERNO, etc.).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Adjunte un <strong>archivo PDF</strong> (opcional, se comprime automáticamente si es muy grande).</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Asigne <strong>etiquetas de color</strong> si corresponde (ej: rojo para URGENTE, verde para RECIBIDO).</div></div>
+      <div class="step"><span class="step-num">6</span><div class="step-body">Opcional: puede <strong>derivar</strong> el documento inmediatamente a otro usuario.</div></div>
+      <div class="step"><span class="step-num">7</span><div class="step-body">Haga clic en <strong>Guardar</strong>.</div></div>
+      <div class="result-box">El documento se registra con un número HR automático (HR-2026-XXXX). Si adjuntó PDF, queda disponible para descarga.</div>
+    </div>
+
+    <div class="example">
+      <h4>Derivar un documento</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Abra el detalle de la correspondencia haciendo clic en ella.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en <strong>Derivar</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>usuario destinatario</strong> (ej: "Director").</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Escriba las <strong>instrucciones</strong> (ej: "Para revisión y firma").</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Confirme la derivación.</div></div>
+      <div class="result-box">El destinatario recibe una notificación y el documento aparece en su bandeja de entrada.</div>
+    </div>
+
+    <div class="example">
+      <h4>Responder una derivación recibida</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Correspondencia → Bandeja</strong> para ver sus derivaciones pendientes.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en la derivación que desea responder.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Escriba su <strong>respuesta</strong> (ej: "Informe recibido, procedo a revisión").</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Confirme.</div></div>
+      <div class="result-box">La derivación se marca como respondida. El remitente original recibe una notificación.</div>
+    </div>
+
+    <div class="tip">
+      Use las etiquetas de color para clasificar visualmente los documentos (URGENTE, PENDIENTE, ARCHIVADO, etc.). Las estadísticas de correspondencia muestran el volumen por tipo y clasificación.
+    </div>
+  </section>
+
+  <!-- ──── 11. COMUNICADOS INTERNOS ──── -->
+  <section class="module" id="comunicados">
+    <div class="module-header">
+      <h3>11. Comunicados Internos</h3>
+      <span class="badge badge-manager">ADMIN · SECRETARIO · JEFE_RRHH</span>
+    </div>
+    <div class="module-desc">
+      Publicación de comunicados internos con distribución selectiva al personal. Numeración HR, etiquetas de color, seguimiento de lectura por destinatario, generación de PDF y notificaciones automáticas.
+    </div>
+
+    <div class="example">
+      <h4>Crear y publicar un comunicado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Comunicados → Nuevo Comunicado</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Complete el <strong>título</strong> (ej: "FERIADO NACIONAL 1 DE MAYO") y el <strong>contenido</strong> del comunicado.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione los <strong>destinatarios</strong>: puede seleccionar individualmente o por servicio completo (ej: todos los empleados de MEDICINA INTERNA).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Asigne <strong>etiquetas</strong> si corresponde.</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Haga clic en <strong>Publicar</strong>.</div></div>
+      <div class="result-box">El comunicado se publica con número HR automático. Cada destinatario recibe una notificación. Puede descargar el PDF del comunicado.</div>
+    </div>
+
+    <div class="example">
+      <h4>Verificar quién leyó un comunicado</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Abra el detalle del comunicado haciendo clic en él.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">En la sección de <strong>Distribución</strong>, vea la lista de destinatarios y quiénes ya marcaron el comunicado como <strong>Leído</strong>.</div></div>
+      <div class="result-box">Sabrá exactamente quién ha leído el comunicado y quién falta. Los destinatarios pueden marcar como leído desde el listado o desde la notificación.</div>
+    </div>
+
+    <div class="tip">
+      Los comunicados son ideales para: feriados, cambios de horario, reuniones, capacitaciones, y cualquier información que deba llegar a todo el personal o a un grupo específico.
+    </div>
+  </section>
+
+  <!-- ──── 12. REPORTES ──── -->
+  <section class="module" id="reportes">
+    <div class="module-header">
+      <h3>12. Reportes</h3>
+      <span class="badge badge-manager">ADMIN · JEFE_RRHH · SECRETARIO</span>
+    </div>
+    <div class="module-desc">
+      Generación de reportes exportables a Excel con datos de asistencia, personal, contratos, sanciones y estadísticas de plantillas. Descarga directa en formato .xlsx.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Reporte</th><th>Contenido</th></tr>
+        <tr><td><strong>Inventario Personal</strong></td><td>Listado completo del personal con filtros (estado, fuente, tipo, unidad)</td></tr>
+        <tr><td><strong>Contratos por Vencer</strong></td><td>Empleados con contrato próximo a vencer</td></tr>
+        <tr><td><strong>Asistencia Mensual</strong></td><td>Un archivo por empleado con su detalle diario del mes</td></tr>
+        <tr><td><strong>Planilla Consolidada</strong></td><td>Todos los empleados en una sola hoja con símbolos por día</td></tr>
+        <tr><td><strong>Ranking de Atrasos</strong></td><td>Top N empleados con más atrasos</td></tr>
+        <tr><td><strong>Sanciones</strong></td><td>Cálculo de multas (factor × haber diario)</td></tr>
+        <tr><td><strong>Plantillas x Depto</strong></td><td>Estadísticas de plantillas por departamento</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>Generar planilla consolidada de asistencia</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Reportes → Asistencia → Planilla Consolidada</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione <strong>mes</strong> (Abril) y <strong>año</strong> (2026).</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Opcional: filtre por <strong>servicio</strong> (ej: MEDICINA INTERNA) o <strong>fuente</strong> (TGN).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Haga clic en <strong>Generar Excel</strong>.</div></div>
+      <div class="result-box">Se descarga un archivo Excel con todos los empleados, un día por columna, y el estado de cada día representado con símbolos (✓=Normal, ⚠=Atraso, ✗=Falta, etc.).</div>
+    </div>
+
+    <div class="example">
+      <h4>Generar reporte de sanciones</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Reportes → Asistencia → Sanciones</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Seleccione mes, año y opcionalmente un empleado específico.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en <strong>Generar</strong>.</div></div>
+      <div class="result-box">Muestra y exporta: empleado, cantidad de atrasos, minutos totales de atraso, faltas, y el monto estimado de la multa según la configuración de sanciones.</div>
+    </div>
+
+    <div class="example">
+      <h4>Reporte de plantillas por departamento</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Reportes → Plantillas por Departamento</strong>.</div></div>
+      <div class="result-box">Estadísticas agrupadas por unidad/servicio: qué plantillas se usan en cada departamento y cuántos empleados las tienen asignadas.</div>
+      <div class="tip">Use los filtros disponibles (estado, fuente, tipo, unidad) para acotar los reportes antes de exportar.</div>
+    </div>
+  </section>
+
+  <!-- ──── 13. NOTIFICACIONES ──── -->
+  <section class="module" id="notificaciones">
+    <div class="module-header">
+      <h3>13. Notificaciones</h3>
+      <span class="badge badge-all">Todos los roles</span>
+    </div>
+    <div class="module-desc">
+      Sistema de notificaciones internas. Cada usuario recibe notificaciones automáticas cuando: se crea/aprueba/rechaza una vacación o permiso, se le asigna un comunicado, o se le deriva correspondencia. Hay 4 tipos: INFO, SUCCESS, WARNING, ALERT.
+    </div>
+
+    <div class="example">
+      <h4>Revisar notificaciones</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">El badge rojo en el sidebar (icono de campana) muestra la <strong>cantidad de no leídas</strong>. Se actualiza cada 30 segundos.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en el icono de campana o vaya a <strong>Notificaciones</strong> para ver la lista completa.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Haga clic en una notificación para <strong>marcarla como leída</strong> y ver el detalle.</div></div>
+      <div class="result-box">Las notificaciones se muestran con icono según su tipo: ℹ️ INFO, ✅ SUCCESS, ⚠️ WARNING, 🚨 ALERT.</div>
+    </div>
+
+    <div class="example">
+      <h4>Marcar todas como leídas</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la página de Notificaciones, haga clic en <strong>Marcar todas como leídas</strong>.</div></div>
+      <div class="result-box">Todas las notificaciones pendientes se marcan como leídas. El badge del sidebar desaparece.</div>
+    </div>
+
+    <div class="tip">
+      Las notificaciones se generan automáticamente por el sistema. No es necesario crearlas manualmente, a menos que tenga el rol ADMIN y quiera enviar una notificación personalizada a un usuario.
+    </div>
+  </section>
+
+  <!-- ──── 14. SANCIONES ──── -->
+  <section class="module" id="sanciones">
+    <div class="module-header">
+      <h3>14. Sanciones</h3>
+      <span class="badge badge-rrhh">ADMIN · JEFE_RRHH</span>
+    </div>
+    <div class="module-desc">
+      Configuración de rangos y factores de sanción por atrasos (minutos) y faltas (días). El factor de sanción multiplica el haber diario del empleado para calcular el monto de la multa. Los cálculos se usan en el reporte de sanciones.
+    </div>
+
+    <div class="example">
+      <h4>Configurar rangos de sanción por atrasos</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Sanciones → Atrasos</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Verá los rangos existentes. Para agregar uno nuevo, haga clic en <strong>Agregar Rango</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Configure:</div>
+      </div>
+      <div style="margin: 8px 0 0 38px; font-size: 14px;">
+        🔹 <strong>Desde:</strong> 1 minuto · <strong>Hasta:</strong> 15 minutos · <strong>Factor:</strong> 2%<br>
+        🔹 Desde: 16 minutos · Hasta: 30 minutos · Factor: 5%<br>
+        🔹 Desde: 31 minutos · Hasta: 60 minutos · Factor: 10%
+      </div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Guarde cada rango.</div></div>
+      <div class="result-box">Cuando se calcule la sanción de un empleado, el sistema usará estos rangos para determinar el factor aplicable a cada atraso.</div>
+    </div>
+
+    <div class="example">
+      <h4>Configurar rangos por faltas</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Sanciones → Faltas</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Agregue rangos:</div>
+      </div>
+      <div style="margin: 8px 0 0 38px; font-size: 14px;">
+        🔹 <strong>1 falta:</strong> Factor 25% del haber diario<br>
+        🔹 <strong>2 faltas:</strong> Factor 50%<br>
+        🔹 <strong>3+ faltas:</strong> Factor 100% (descuento del día completo)
+      </div>
+      <div class="result-box">El cálculo automático usará estos factores para estimar el descuento salarial del empleado.</div>
+    </div>
+
+    <div class="tip">
+      El haber diario se calcula como: (Haber Básico + Antigüedad) / 30 días. La sanción total es la suma de sanciones por atrasos más sanciones por faltas.
+    </div>
+  </section>
+
+  <!-- ──── 15. CONFIGURACIÓN ──── -->
+  <section class="module" id="configuracion">
+    <div class="module-header">
+      <h3>15. Configuración del Sistema</h3>
+      <span class="badge badge-admin">ADMIN</span>
+    </div>
+    <div class="module-desc">
+      Administración general del sistema: gestión de usuarios y roles, parámetros del sistema, tipos de permiso, formato de cite (numeración), etiquetas de color, y configuración de sanciones.
+    </div>
+
+    <div class="example">
+      <h4>Crear un nuevo usuario</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Usuarios</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Haga clic en <strong>Agregar Usuario</strong>.</div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Seleccione el <strong>empleado</strong> (se autocompleta con el CI y nombre).</div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">Asigne <strong>roles</strong> al usuario (ej: SECRETARIO).</div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">Haga clic en <strong>Guardar</strong>.</div></div>
+      <div class="result-box">El usuario se crea con contraseña igual al CI del empleado. Al primer ingreso, deberá cambiar la contraseña.</div>
+    </div>
+
+    <div class="example">
+      <h4>Resetear contraseña de un usuario</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la lista de usuarios, haga clic en <strong>Resetear Password</strong> junto al usuario.</div></div>
+      <div class="result-box">La contraseña se restablece al número de CI del empleado. El usuario deberá cambiarla en el próximo inicio de sesión.</div>
+    </div>
+
+    <div class="example">
+      <h4>Activar/Desactivar un usuario</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">En la lista de usuarios, use el toggle <strong>Activo/Inactivo</strong>.</div></div>
+      <div class="result-box">Un usuario inactivo no puede iniciar sesión en el sistema. Útil cuando un empleado deja la institución.</div>
+    </div>
+
+    <div class="example">
+      <h4>Configurar parámetros del sistema</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Configuración</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Verá la lista de parámetros clave-valor:</div>
+      <div style="margin: 8px 0 0 38px; font-size: 14px;">
+        🔹 <code>tolerancia_atraso_default</code> — Tolerancia general de atraso (minutos)<br>
+        🔹 <code>umbral_maximo_atraso_horas</code> — Máximo de horas de atraso permitido<br>
+        🔹 <code>dashboard_mes_default</code> — Mes por defecto en el Dashboard<br>
+        🔹 <code>ventana_busqueda_nocturna_h</code> — Ventana de búsqueda para turnos nocturnos
+      </div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">Para modificar, haga clic en el parámetro, cambie el valor y guarde.</div></div>
+      <div class="result-box">Los cambios afectan al sistema en tiempo real. Por ejemplo, cambiar <code>tolerancia_atraso_default</code> afecta el cálculo de asistencia.</div>
+      <div class="warning-note">Cambiar parámetros del sistema puede afectar el comportamiento global. Asegúrese de entender cada parámetro antes de modificarlo.</div>
+    </div>
+
+    <div class="example">
+      <h4>Gestionar tipos de permiso</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Configuración → Tipos de Permiso</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Puede <strong>crear</strong> nuevos tipos (ej: "PERMISO_SINDICAL"), <strong>editar</strong> existentes, o <strong>eliminar</strong> los que no se usen.</div></div>
+      <div class="warning-note">Eliminar un tipo de permiso que ya tiene registros puede causar inconsistencias. Prefiera desactivar en lugar de eliminar.</div>
+    </div>
+
+    <div class="example">
+      <h4>Configurar formato de cite (numeración)</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Configuración → Cite</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Configure el formato de numeración: prefijo, separadores, año (ej: <code>CERT-{gestion}-{numero}</code>).</div></div>
+      <div class="result-box">Los certificados y comunicados usarán el nuevo formato de numeración.</div>
+    </div>
+
+    <div class="example">
+      <h4>Gestionar etiquetas de color</h4>
+      <div class="step"><span class="step-num">1</span><div class="step-body">Vaya a <strong>Admin → Configuración → Etiquetas</strong>.</div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">Cree etiquetas con nombre y color (ej: "URGENTE" → rojo, "PENDIENTE" → amarillo).</div></div>
+      <div class="result-box">Las etiquetas están disponibles en correspondencia y comunicados para clasificación visual.</div>
+    </div>
+  </section>
+
+  <!-- ──── 16. TAREAS AUTOMATIZADAS ──── -->
+  <section class="module" id="tareas">
+    <div class="module-header">
+      <h3>16. Tareas Automatizadas</h3>
+      <span class="badge badge-admin">ADMIN</span>
+    </div>
+    <div class="module-desc">
+      El sistema ejecuta tareas programadas (cron jobs) automáticamente. No requieren intervención del usuario, pero es importante conocer su funcionamiento para entender ciertos comportamientos del sistema.
+    </div>
+
+    <div class="actions-table">
+      <table>
+        <tr><th>Tarea</th><th>Horario</th><th>Descripción</th></tr>
+        <tr><td>Verificación de contratos</td><td>Diario 01:00 AM</td><td>Marca como INACTIVO al personal cuyo contrato ya venció</td></tr>
+        <tr><td>Cálculo de asistencia</td><td>Diario 06:00 AM</td><td>Recalcula el estado de asistencia del día anterior para todos los empleados con marcaciones biométricas</td></tr>
+      </table>
+    </div>
+
+    <div class="example">
+      <h4>¿Por qué un empleado apareció como INACTIVO sin que nadie lo modifique?</h4>
+      <div class="step"><span class="step-num">→</span><div class="step-body">El <strong>job de verificación de contratos</strong> se ejecuta todas las noches a la 01:00 AM. Si un contrato tenía fecha de fin anterior a la fecha actual, el sistema cambia automáticamente el estado del empleado a INACTIVO.</div></div>
+      <div class="tip">Si necesita reactivar a un empleado que fue auto-inactivado, vaya a Personal, edite al empleado, cambie estado a ACTIVO y actualice su contrato.</div>
+    </div>
+
+    <div class="example">
+      <h4>¿Por qué la asistencia de ayer ya está calculada?</h4>
+      <div class="step"><span class="step-num">→</span><div class="step-body">El <strong>job de cálculo diario</strong> se ejecuta a las 06:00 AM y procesa todas las marcaciones del día anterior. Si un empleado tenía turno y marcaciones, su asistencia se calcula automáticamente.</div></div>
+      <div class="tip">Si se sincronizan marcaciones biométricas después de las 06:00 AM, use el recalculo manual desde Biometrico → Recalcular.</div>
+    </div>
+  </section>
+
+  <!-- ──── FOOTER ──── -->
+  <div class="footer">
+    <p>Hospital Barrios Mineros — Sistema de Gestión de Recursos Humanos</p>
+    <p>Documento generado el 2026-04-01 · Versión 1.0</p>
+  </div>
+
+</div><!-- .main -->
+
+<script>
+function toggleMenu() {
+  document.getElementById('sidebarNav').classList.toggle('open');
+}
+// Highlight active section in sidebar on scroll
+const sections = document.querySelectorAll('.module');
+const navLinks = document.querySelectorAll('.sidebar-nav a');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.sidebar-nav a[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-100px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+
+</div><!-- .main -->
+
+</body>
+</html>
