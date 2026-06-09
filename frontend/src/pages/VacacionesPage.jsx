@@ -3,7 +3,7 @@ import {
   Plane, Plus, Search, CheckCircle2, XCircle, Clock,
   AlertCircle, Calendar, User, FileText, Trash2, Ban
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const ESTADOS = {
   PENDIENTE: { label: 'Pendiente', class: 'bg-amber-50 text-amber-600' },
@@ -39,7 +39,7 @@ const VacacionesPage = () => {
 
   useEffect(() => {
     if (form.personal_id) {
-      fetch(`${API_BASE_URL}/api/vacaciones/saldo/${form.personal_id}`)
+      authFetch(`${API_BASE_URL}/api/vacaciones/saldo/${form.personal_id}`)
         .then(r => r.json())
         .then(setSaldo)
         .catch(() => setSaldo(null));
@@ -62,7 +62,7 @@ const VacacionesPage = () => {
     try {
       let url = `${API_BASE_URL}/api/vacaciones`;
       if (filtroEstado) url += `?estado=${filtroEstado}`;
-      const res = await fetch(url);
+      const res = await authFetch(url);
       if (res.ok) setVacaciones(await res.json());
     } catch (e) {
       console.error(e);
@@ -73,14 +73,14 @@ const VacacionesPage = () => {
 
   const fetchResumen = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vacaciones/resumen`);
+      const res = await authFetch(`${API_BASE_URL}/api/vacaciones/resumen`);
       if (res.ok) setResumen(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchPersonal = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/personal?limit=300`);
+      const res = await authFetch(`${API_BASE_URL}/api/personal?limit=300`);
       if (res.ok) {
         const json = await res.json();
         setPersonalList(json.data || json || []);
@@ -91,7 +91,7 @@ const VacacionesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vacaciones`, {
+      const res = await authFetch(`${API_BASE_URL}/api/vacaciones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, personal_id: parseInt(form.personal_id) })
@@ -112,7 +112,7 @@ const VacacionesPage = () => {
 
   const cambiarEstado = async (id, estado) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vacaciones/${id}/estado`, {
+      const res = await authFetch(`${API_BASE_URL}/api/vacaciones/${id}/estado`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado })

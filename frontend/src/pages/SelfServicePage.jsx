@@ -34,10 +34,16 @@ export default function SelfServicePage() {
   const [justifRemotaMotivo, setJustifRemotaMotivo] = useState('');
 
   const fetchResumen = async () => {
+    if (!usuario?.personal_id) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get('/api/self-service/resumen');
       setResumen(res.data);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error('Error fetching resumen:', e);
+    }
     setLoading(false);
   };
 

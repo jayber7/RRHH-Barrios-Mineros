@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { X, AlertTriangle, AlertCircle, CheckCircle, Clock, User, Calendar, ShieldAlert } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, api } from '../config/api';
 
 const ContratosAlertasModal = ({ onClose }) => {
   const [data, setData] = useState(null);
@@ -17,7 +16,7 @@ const ContratosAlertasModal = ({ onClose }) => {
   const fetchAlertas = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/personal/contratos-alertas`);
+      const response = await api.get(`/api/personal/contratos-alertas`);
       setData(response.data);
     } catch (error) {
       console.error('Error fetching contratos alertas:', error);
@@ -29,7 +28,7 @@ const ContratosAlertasModal = ({ onClose }) => {
   const handleAutoInactivar = async () => {
     setInactivating(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/personal/auto-inactivar`);
+      const response = await api.post(`/api/personal/auto-inactivar`);
       setResult({ type: 'success', message: response.data.message });
       setShowConfirm(false);
       fetchAlertas();

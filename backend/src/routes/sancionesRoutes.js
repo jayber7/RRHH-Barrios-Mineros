@@ -1,17 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const SancionesController = require('../controllers/sancionesController');
+const { authMiddleware, checkPermission } = require('../middleware/authMiddleware');
 
-router.get('/atrasos', SancionesController.getSancionesAtrasos);
-router.post('/atrasos', SancionesController.createSancionAtraso);
-router.put('/atrasos/:id', SancionesController.updateSancionAtraso);
-router.delete('/atrasos/:id', SancionesController.deleteSancionAtraso);
+router.use(authMiddleware);
 
-router.get('/faltas', SancionesController.getSancionesFaltas);
-router.post('/faltas', SancionesController.createSancionFalta);
-router.put('/faltas/:id', SancionesController.updateSancionFalta);
-router.delete('/faltas/:id', SancionesController.deleteSancionFalta);
+router.get('/atrasos', checkPermission('sanciones.ver'), SancionesController.getSancionesAtrasos);
+router.post('/atrasos', checkPermission('sanciones.gestionar'), SancionesController.createSancionAtraso);
+router.put('/atrasos/:id', checkPermission('sanciones.gestionar'), SancionesController.updateSancionAtraso);
+router.delete('/atrasos/:id', checkPermission('sanciones.gestionar'), SancionesController.deleteSancionAtraso);
 
-router.get('/motivos', SancionesController.getMotivos);
+router.get('/faltas', checkPermission('sanciones.ver'), SancionesController.getSancionesFaltas);
+router.post('/faltas', checkPermission('sanciones.gestionar'), SancionesController.createSancionFalta);
+router.put('/faltas/:id', checkPermission('sanciones.gestionar'), SancionesController.updateSancionFalta);
+router.delete('/faltas/:id', checkPermission('sanciones.gestionar'), SancionesController.deleteSancionFalta);
+
+router.get('/motivos', checkPermission('sanciones.ver'), SancionesController.getMotivos);
 
 module.exports = router;

@@ -5,7 +5,7 @@ import {
   Clock, Activity, Download, Search,
   ArrowRight, X, FileText
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TABS = [
   { id: 'dispositivo', label: 'Dispositivo', icon: Settings },
@@ -28,7 +28,7 @@ const BiometricoPage = () => {
 
   const fetchConfig = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/biometrico/config`);
+      const res = await authFetch(`${API_BASE_URL}/api/biometrico/config`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.ip_address) setConfig(data);
@@ -40,7 +40,7 @@ const BiometricoPage = () => {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/biometrico/raw-logs`);
+      const res = await authFetch(`${API_BASE_URL}/api/biometrico/raw-logs`);
       if (res.ok) {
         const data = await res.json();
         setLogs(Array.isArray(data) ? data : []);
@@ -56,7 +56,7 @@ const BiometricoPage = () => {
   const handleUpdateConfig = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/biometrico/config`, {
+      const res = await authFetch(`${API_BASE_URL}/api/biometrico/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -73,7 +73,7 @@ const BiometricoPage = () => {
     setLoading(true);
     setStatus({ type: 'info', text: 'Conectando con el equipo y extrayendo logs...' });
     try {
-      const res = await fetch(`${API_BASE_URL}/api/biometrico/sync-logs`, { method: 'POST' });
+      const res = await authFetch(`${API_BASE_URL}/api/biometrico/sync-logs`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setStatus({ type: 'success', text: `Sincronización completa. Recibidos: ${data.totalRecibidos}, Nuevos: ${data.nuevosGuardados}` });
@@ -278,7 +278,7 @@ const ImportarTab = ({ showStatus, onImported }) => {
 
     setImporting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/biometrico/import-logs`, {
+      const res = await authFetch(`${API_BASE_URL}/api/biometrico/import-logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ marcas })
@@ -397,7 +397,7 @@ const ValidacionesTab = ({ showStatus }) => {
     try {
       let url = `${API_BASE_URL}/api/biometrico/validaciones?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`;
       if (personalId) url += `&personal_id=${personalId}`;
-      const res = await fetch(url);
+      const res = await authFetch(url);
       const data = await res.json();
       if (res.ok) {
         setResultado(data);

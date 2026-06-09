@@ -4,19 +4,21 @@ import {
   Users, Calendar, Clock, Plane, FileBadge, 
   MessageSquare, RefreshCw, LayoutDashboard, Cpu,
   FileSpreadsheet, FileText, Inbox, Settings, LogOut, AlertTriangle,
-  Bell, CheckCheck, User
+  Bell, CheckCheck, User, Shield
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { usuario, logout } = useAuth();
+  const { usuario, logout, config } = useAuth();
   const [notifCount, setNotifCount] = useState(0);
   const [notifList, setNotifList] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  const esSoloEmpleado = usuario?.roles?.every(r => ['GENERAL', 'AUXILIAR'].includes(r));
 
   useEffect(() => {
     if (usuario) {
@@ -38,7 +40,7 @@ const Sidebar = () => {
 
   const fetchNotifCount = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/notificaciones/no-leidas`, {
+      const res = await authFetch(`${API_BASE_URL}/api/notificaciones/no-leidas`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) {
@@ -51,7 +53,7 @@ const Sidebar = () => {
   const toggleDropdown = async () => {
     if (!showDropdown) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/notificaciones?solo_no_leidas=true&limit=5`, {
+        const res = await authFetch(`${API_BASE_URL}/api/notificaciones?solo_no_leidas=true&limit=5`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (res.ok) setNotifList(await res.json());
@@ -62,7 +64,7 @@ const Sidebar = () => {
 
   const marcarLeida = async (id) => {
     try {
-      await fetch(`${API_BASE_URL}/api/notificaciones/${id}/leer`, {
+      await authFetch(`${API_BASE_URL}/api/notificaciones/${id}/leer`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -75,29 +77,37 @@ const Sidebar = () => {
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/', permission: 'dashboard.ver' },
     { name: 'Mi Perfil', icon: <User size={20} />, path: '/self-service' },
-    { name: 'Gestión de Personal', icon: <Users size={20} />, path: '/personal' },
-    { name: 'Asistencias', icon: <Clock size={20} />, path: '/asistencias' },
-    { name: 'Biométrico', icon: <Cpu size={20} />, path: '/biometrico' },
-    { name: 'Turnos', icon: <Calendar size={20} />, path: '/turnos' },
-    { name: 'Vacaciones', icon: <Plane size={20} />, path: '/vacaciones' },
-    { name: 'Permisos', icon: <FileBadge size={20} />, path: '/permisos' },
-    { name: 'Certificaciones', icon: <FileBadge size={20} />, path: '/certificaciones' },
+    { name: 'Gestión de Personal', icon: <Users size={20} />, path: '/personal', permission: 'personal.ver' },
+    { name: 'Asistencias', icon: <Clock size={20} />, path: '/asistencias', permission: 'asistencia.ver' },
+    { name: 'Biométrico', icon: <Cpu size={20} />, path: '/biometrico', permission: 'biometrico.ver' },
+    { name: 'Turnos', icon: <Calendar size={20} />, path: '/turnos', permission: 'turnos.ver' },
+    { name: 'Vacaciones', icon: <Plane size={20} />, path: '/vacaciones', permission: 'vacaciones.ver' },
+    { name: 'Permisos', icon: <FileBadge size={20} />, path: '/permisos', permission: 'permisos.ver' },
+    { name: 'Certificaciones', icon: <FileBadge size={20} />, path: '/certificaciones', permission: 'certificados.ver' },
     { name: 'Notificaciones', icon: <Bell size={20} />, path: '/notificaciones', badge: notifCount },
-    { name: 'Comunicados/Memo', icon: <MessageSquare size={20} />, path: '/comunicados' },
-    { name: 'Reemplazos', icon: <RefreshCw size={20} />, path: '/reemplazos' },
+    { name: 'Comunicados/Memo', icon: <MessageSquare size={20} />, path: '/comunicados', permission: 'comunicados.ver' },
+    { name: 'Reemplazos', icon: <RefreshCw size={20} />, path: '/reemplazos', permission: 'personal.ver' },
   ];
 
   const correspondenciaItems = [
-    { name: 'Correspondencia', icon: <FileText size={20} />, path: '/correspondencia' },
-    { name: 'Bandeja Entrada', icon: <Inbox size={20} />, path: '/correspondencia/bandeja' },
+    { name: 'Correspondencia', icon: <FileText size={20} />, path: '/correspondencia', permission: 'correspondencia.ver' },
+    { name: 'Bandeja Entrada', icon: <Inbox size={20} />, path: '/correspondencia/bandeja', permission: 'correspondencia.ver' },
   ];
 
   const adminItems = [
-    { name: 'Configuración', icon: <Settings size={20} />, path: '/admin/config' },
-    { name: 'Sanciones', icon: <AlertTriangle size={20} />, path: '/admin/sanciones' },
+    { name: 'Configuración', icon: <Settings size={20} />, path: '/admin/config', permission: 'config.ver' },
+    { name: 'Roles y Permisos', icon: <Shield size={20} />, path: '/admin/roles', permission: 'roles.ver' },
+    { name: 'Sanciones', icon: <AlertTriangle size={20} />, path: '/admin/sanciones', permission: 'sanciones.ver' },
   ];
+
+  const hasPermission = (item) => {
+    if (!item.permission) return true;
+    const adminRole = config?.seguridad_rol_admin || 'ADMIN';
+    if (usuario?.roles?.includes(adminRole)) return true;
+    return usuario?.permisos?.includes(item.permission);
+  };
 
   const isActive = (path) => location.pathname === path;
   const linkClass = (path) => 
@@ -108,8 +118,14 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-slate-800 text-white min-h-screen p-4 flex flex-col">
       <div className="text-xl font-bold mb-8 px-2 flex items-center gap-2">
-        <div className="w-8 h-8 bg-blue-500 rounded-md"></div>
-        Barrios Mineros
+        <div className="w-8 h-8 bg-blue-500 rounded-md overflow-hidden flex-shrink-0">
+          {config?.institucion_logo_url ? (
+            <img src={config.institucion_logo_url} alt="Logo" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-blue-500"></div>
+          )}
+        </div>
+        <span className="truncate">{config?.institucion_nombre || 'Hospital BM'}</span>
       </div>
 
       <div className="mb-4 px-3 py-2 bg-slate-700/50 rounded-lg flex items-center justify-between">
@@ -158,7 +174,7 @@ const Sidebar = () => {
 
       <nav className="flex-1 overflow-y-auto">
         <p className="text-xs font-semibold text-slate-500 uppercase px-3 mb-2 tracking-wider">General</p>
-        {menuItems.map((item) => (
+        {menuItems.filter(hasPermission).map((item) => (
           <Link key={item.path} to={item.path} className={linkClass(item.path)}>
             {item.icon}
             <span className="flex-1">{item.name}</span>
@@ -169,28 +185,33 @@ const Sidebar = () => {
             )}
           </Link>
         ))}
-        <Link to="/reportes" className={linkClass('/reportes')}>
-          <FileSpreadsheet size={20} />
-          <span>Reportes</span>
-        </Link>
 
-        <p className="text-xs font-semibold text-slate-500 uppercase px-3 mt-4 mb-2 tracking-wider">Correspondencia</p>
-        {correspondenciaItems.map((item) => (
-          <Link key={item.path} to={item.path} className={linkClass(item.path)}>
-            {item.icon}
-            <span>{item.name}</span>
-          </Link>
-        ))}
-
-        {usuario?.roles?.includes('ADMIN') && (
+        {!esSoloEmpleado && (
           <>
-            <p className="text-xs font-semibold text-slate-500 uppercase px-3 mt-4 mb-2 tracking-wider">Administración</p>
-            {adminItems.map((item) => (
+            <Link to="/reportes" className={linkClass('/reportes')}>
+              <FileSpreadsheet size={20} />
+              <span>Reportes</span>
+            </Link>
+
+            <p className="text-xs font-semibold text-slate-500 uppercase px-3 mt-4 mb-2 tracking-wider">Correspondencia</p>
+            {correspondenciaItems.filter(hasPermission).map((item) => (
               <Link key={item.path} to={item.path} className={linkClass(item.path)}>
                 {item.icon}
                 <span>{item.name}</span>
               </Link>
             ))}
+
+            {(usuario?.roles?.includes(config?.seguridad_rol_admin || 'ADMIN') || adminItems.some(hasPermission)) && (
+              <>
+                <p className="text-xs font-semibold text-slate-500 uppercase px-3 mt-4 mb-2 tracking-wider">Administración</p>
+                {adminItems.filter(hasPermission).map((item) => (
+                  <Link key={item.path} to={item.path} className={linkClass(item.path)}>
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </Link>
+                ))}
+              </>
+            )}
           </>
         )}
       </nav>

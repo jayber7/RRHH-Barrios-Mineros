@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const ComunicadosController = require('../controllers/comunicadosController');
-const { authMiddleware, checkRole } = require('../middleware/authMiddleware');
+const { authMiddleware, checkPermission } = require('../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
-router.get('/destinatarios', ComunicadosController.getDestinatarios);
-router.get('/', ComunicadosController.getAll);
-router.get('/:id', ComunicadosController.getById);
-router.get('/:id/pdf', ComunicadosController.generarPDF);
-router.post('/', checkRole('ADMIN', 'SECRETARIO', 'JEFE_RRHH'), ComunicadosController.create);
-router.put('/:id/leer', ComunicadosController.marcarLeido);
+router.get('/destinatarios', checkPermission('comunicados.ver'), ComunicadosController.getDestinatarios);
+router.get('/', checkPermission('comunicados.ver'), ComunicadosController.getAll);
+router.get('/:id', checkPermission('comunicados.ver'), ComunicadosController.getById);
+router.get('/:id/pdf', checkPermission('comunicados.ver'), ComunicadosController.generarPDF);
+router.post('/', checkPermission('comunicados.gestionar'), ComunicadosController.create);
+router.put('/:id/leer', checkPermission('comunicados.ver'), ComunicadosController.marcarLeido);
 
 module.exports = router;

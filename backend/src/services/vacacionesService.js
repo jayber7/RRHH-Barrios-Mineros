@@ -63,7 +63,9 @@ class VacacionesService {
       WHERE personal_id = $1 AND estado IN ('APROBADO', 'GOZADO')
     `, [personalId]);
 
-    const totalDias = 15;
+    const ConfiguracionService = require('./configuracionService');
+    const totalDias = await ConfiguracionService.get('vacaciones_dias_anuales', 15);
+    
     return {
       personal_id: personalId,
       total_anual: totalDias,
@@ -146,12 +148,14 @@ class VacacionesService {
           });
         }
         if (nuevoEstado === 'PENDIENTE') {
+          const ConfiguracionService = require('./configuracionService');
+          const adminRole = await ConfiguracionService.get('seguridad_rol_admin', 'ADMIN');
           const { rows: admins } = await db.query(`
             SELECT DISTINCT u.id FROM usuarios u
             JOIN usuario_roles ur ON u.id = ur.usuario_id
             JOIN roles r ON ur.rol_id = r.id
-            WHERE r.codigo IN ('ADMIN', 'JEFE_RRHH')
-          `);
+            WHERE r.nombre = $1 OR r.nombre = 'JEFE_RRHH'
+          `, [adminRole]);
           for (const a of admins) {
             await NotificacionesService.crear({
               usuario_id: a.id,

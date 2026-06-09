@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const ConfiguracionService = require('../services/configuracionService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
@@ -80,11 +81,12 @@ const checkRole = (...roles) => {
 };
 
 const checkPermission = (codigo) => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!req.usuario) {
       return res.status(401).json({ error: 'No autenticado' });
     }
-    if (req.usuario.roles.includes('ADMIN')) {
+    const adminRole = await ConfiguracionService.get('seguridad_rol_admin', 'ADMIN');
+    if (req.usuario.roles.includes(adminRole)) {
       return next();
     }
     if (!req.usuario.permisos.includes(codigo)) {

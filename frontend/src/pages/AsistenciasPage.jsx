@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import AsistenciaImport from '../components/AsistenciaImport';
 import JustificacionModal from '../components/JustificacionModal';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const ESTADO_COLORS = {
   1: 'bg-emerald-100 text-emerald-700',
@@ -45,7 +45,7 @@ const AsistenciasPage = () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams(filters).toString();
-      const response = await fetch(`${API_BASE_URL}/api/asistencia?${queryParams}`);
+      const response = await authFetch(`${API_BASE_URL}/api/asistencia?${queryParams}`);
       const data = await response.json();
       setAsistencias(data);
     } catch (error) {
@@ -61,7 +61,7 @@ const AsistenciasPage = () => {
 
   const fetchDetalle = async (id) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/asistencia/detalle/${id}`);
+      const res = await authFetch(`${API_BASE_URL}/api/asistencia/detalle/${id}`);
       const data = await res.json();
       setDetalleData(data);
       setDetalleId(id);
@@ -77,7 +77,7 @@ const AsistenciasPage = () => {
   const handleCalculate = async () => {
     if (!window.confirm('¿Calcular automáticamente estados del período actual?')) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/asistencia/calcular-todos`, {
+      const res = await authFetch(`${API_BASE_URL}/api/asistencia/calcular-todos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mes: filters.mes, anio: filters.anio }),
@@ -91,7 +91,7 @@ const AsistenciasPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Está seguro de eliminar este registro de asistencia?')) return;
     try {
-      await fetch(`${API_BASE_URL}/api/asistencia/${id}`, { method: 'DELETE' });
+      await authFetch(`${API_BASE_URL}/api/asistencia/${id}`, { method: 'DELETE' });
       fetchAsistencias();
     } catch (error) {
       alert('Error al eliminar');
@@ -228,7 +228,7 @@ const AsistenciasPage = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">
-                            {item.primer_nombre[0]}{item.apellido_paterno[0]}
+                            {(item.primer_nombre?.[0] || '')}{(item.apellido_paterno?.[0] || '')}
                           </div>
                           <div>
                             <div className="font-bold text-slate-700">{item.primer_nombre} {item.apellido_paterno}</div>

@@ -83,4 +83,26 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getRoles, getPermisos, updateRoles, toggleActivo, createUser, resetPassword };
+const bulkAssignRole = async (req, res) => {
+  try {
+    const { user_ids, role_id } = req.body;
+    if (!user_ids || !role_id) return res.status(400).json({ error: 'user_ids y role_id requeridos' });
+    await UsuarioModel.bulkAssignRole(user_ids, role_id);
+    res.json({ mensaje: 'Rol asignado masivamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const bulkRemoveRole = async (req, res) => {
+  try {
+    const { user_ids, role_id } = req.body;
+    if (!user_ids || !role_id) return res.status(400).json({ error: 'user_ids y role_id requeridos' });
+    await UsuarioModel.bulkRemoveRole(user_ids, role_id);
+    res.json({ mensaje: 'Rol removido masivamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getAll, getRoles, getPermisos, updateRoles, toggleActivo, createUser, resetPassword, bulkAssignRole, bulkRemoveRole };

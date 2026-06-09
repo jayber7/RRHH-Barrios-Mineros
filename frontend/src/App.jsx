@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
@@ -21,6 +21,7 @@ import VacacionesPage from './pages/VacacionesPage';
 import PermisosPage from './pages/PermisosPage';
 import CertificadosPage from './pages/CertificadosPage';
 import NotificacionesPage from './pages/NotificacionesPage';
+import AdminRolesPage from './pages/AdminRolesPage';
 import SancionesConfig from './components/SancionesConfig';
 
 const Placeholder = ({ title }) => (
@@ -100,6 +101,23 @@ function AppContent() {
     );
   }
 
+  const esSoloEmpleado = usuario.roles?.every(r => ['GENERAL', 'AUXILIAR'].includes(r));
+
+  if (esSoloEmpleado) {
+    return (
+      <div className="flex bg-slate-50 h-screen overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto h-full">
+          <Routes>
+            <Route path="/self-service" element={<SelfServicePage />} />
+            <Route path="/notificaciones" element={<NotificacionesPage />} />
+            <Route path="*" element={<Navigate to="/self-service" replace />} />
+          </Routes>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex bg-slate-50 h-screen overflow-hidden">
       <Sidebar />
@@ -107,14 +125,14 @@ function AppContent() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Dashboard />} />
-          <Route path="/personal" element={<PersonalPage />} />
-          <Route path="/asistencias" element={<AsistenciasPage />} />
-          <Route path="/biometrico" element={<BiometricoPage />} />
+          <Route path="/personal" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><PersonalPage /></ProtectedRoute>} />
+          <Route path="/asistencias" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><AsistenciasPage /></ProtectedRoute>} />
+          <Route path="/biometrico" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><BiometricoPage /></ProtectedRoute>} />
           <Route path="/self-service" element={<SelfServicePage />} />
-          <Route path="/turnos" element={<TurnosPage />} />
-          <Route path="/vacaciones" element={<VacacionesPage />} />
-          <Route path="/permisos" element={<PermisosPage />} />
-          <Route path="/certificaciones" element={<CertificadosPage />} />
+          <Route path="/turnos" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><TurnosPage /></ProtectedRoute>} />
+          <Route path="/vacaciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><VacacionesPage /></ProtectedRoute>} />
+          <Route path="/permisos" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><PermisosPage /></ProtectedRoute>} />
+          <Route path="/certificaciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><CertificadosPage /></ProtectedRoute>} />
           <Route path="/notificaciones" element={<NotificacionesPage />} />
           <Route path="/comunicados" element={<ComunicadosPage />} />
           <Route path="/reemplazos" element={<Placeholder title="Reemplazos" />} />
@@ -124,7 +142,9 @@ function AppContent() {
           <Route path="/correspondencia/:id" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><CorrespondenciaDetail /></ProtectedRoute>} />
           <Route path="/correspondencia/bandeja" element={<ProtectedRoute roles={['ADMIN', 'SECRETARIO', 'DIRECTOR', 'JEFE_RRHH', 'AUXILIAR']}><BandejaPage /></ProtectedRoute>} />
           <Route path="/admin/config" element={<ProtectedRoute roles={['ADMIN']}><ConfiguracionPage /></ProtectedRoute>} />
+          <Route path="/admin/roles" element={<ProtectedRoute roles={['ADMIN']}><AdminRolesPage /></ProtectedRoute>} />
           <Route path="/admin/sanciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><div className="p-8 bg-slate-50 min-h-screen"><h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-8">Configuración de Sanciones</h1><SancionesConfig /></div></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>

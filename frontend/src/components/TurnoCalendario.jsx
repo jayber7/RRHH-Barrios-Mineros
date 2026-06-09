@@ -3,7 +3,7 @@ import {
   ChevronLeft, ChevronRight, Download, X, Calendar, Clock, Users,
   AlertTriangle
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TIPO_TURNO = {
   manana:   { label: 'Mañana',   abbr: 'M',  bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200',  dot: 'bg-blue-500' },
@@ -79,7 +79,7 @@ export default function TurnoCalendario({ plantillas }) {
     try {
       const params = new URLSearchParams({ mes, anio });
       if (servicio) params.set('servicio', servicio);
-      const res = await fetch(`${API_BASE_URL}/api/turnos/calendario?${params}`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/calendario?${params}`);
       const d = await res.json();
       setData(Array.isArray(d) ? d : []);
     } catch (e) { console.error(e); }
@@ -123,7 +123,7 @@ export default function TurnoCalendario({ plantillas }) {
     setDiaModal(dia);
     setDiaLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/calendario/dia?mes=${mes}&anio=${anio}&dia=${dia}`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/calendario/dia?mes=${mes}&anio=${anio}&dia=${dia}`);
       const d = await res.json();
       setDiaPersonal(Array.isArray(d) ? d : []);
     } catch (e) { setDiaPersonal([]); }
@@ -149,7 +149,7 @@ export default function TurnoCalendario({ plantillas }) {
 
     const newFecha = `${anio}-${String(mes).padStart(2, '0')}-${String(targetDia).padStart(2, '0')}`;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/asignados/${sourceTurno.id}`, {
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/asignados/${sourceTurno.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fecha_inicio: newFecha, fecha_fin: newFecha }),

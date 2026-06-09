@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertOctagon, ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TIPO_ICON = {
   INFO: { icon: Info, class: 'bg-blue-50 text-blue-600' },
@@ -35,7 +35,7 @@ const NotificacionesPage = () => {
     try {
       let url = `${API_BASE_URL}/api/notificaciones`;
       if (filtro === 'no-leidas') url += '?solo_no_leidas=true';
-      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+      const res = await authFetch(url, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (res.ok) setNotificaciones(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -43,7 +43,7 @@ const NotificacionesPage = () => {
 
   const fetchResumen = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/notificaciones/resumen`, {
+      const res = await authFetch(`${API_BASE_URL}/api/notificaciones/resumen`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.ok) setResumen(await res.json());
@@ -52,7 +52,7 @@ const NotificacionesPage = () => {
 
   const marcarLeida = async (id) => {
     try {
-      await fetch(`${API_BASE_URL}/api/notificaciones/${id}/leer`, {
+      await authFetch(`${API_BASE_URL}/api/notificaciones/${id}/leer`, {
         method: 'PUT', headers: getAuthHeaders()
       });
       fetchNotificaciones();
@@ -62,7 +62,7 @@ const NotificacionesPage = () => {
 
   const marcarTodasLeidas = async () => {
     try {
-      await fetch(`${API_BASE_URL}/api/notificaciones/leer-todas`, {
+      await authFetch(`${API_BASE_URL}/api/notificaciones/leer-todas`, {
         method: 'PUT', headers: getAuthHeaders()
       });
       fetchNotificaciones();
@@ -72,7 +72,7 @@ const NotificacionesPage = () => {
 
   const eliminar = async (id) => {
     try {
-      await fetch(`${API_BASE_URL}/api/notificaciones/${id}`, {
+      await authFetch(`${API_BASE_URL}/api/notificaciones/${id}`, {
         method: 'DELETE', headers: getAuthHeaders()
       });
       fetchNotificaciones();

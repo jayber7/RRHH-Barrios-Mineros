@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, X } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TurnoAsignacionForm = ({ plantillas, personal, onSave, onCancel }) => {
   const [form, setForm] = useState({
@@ -14,7 +14,7 @@ const TurnoAsignacionForm = ({ plantillas, personal, onSave, onCancel }) => {
 
   const loadSinTurno = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/personal-sin-turno`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/personal-sin-turno`);
       const data = await res.json();
       setSinTurno(data);
     } catch (e) { console.error(e); }
@@ -26,7 +26,7 @@ const TurnoAsignacionForm = ({ plantillas, personal, onSave, onCancel }) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/asignados`, {
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/asignados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

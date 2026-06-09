@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
   FileSpreadsheet, Download, CalendarClock, Users, Filter,
   ChevronRight, Settings, Calendar, AlertTriangle, Gavel, LayoutGrid
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, api } from '../config/api';
 
 const meses = [
   { id: 1, nombre: 'Enero' }, { id: 2, nombre: 'Febrero' }, { id: 3, nombre: 'Marzo' },
@@ -26,7 +25,7 @@ const ReportesPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/reportes/config`)
+    api.get(`/api/reportes/config`)
       .then(res => setConfig(res.data))
       .catch(err => console.error(err));
   }, []);

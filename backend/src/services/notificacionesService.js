@@ -57,7 +57,9 @@ class NotificacionesService {
   static async crearParaTodos(data, soloAdmin = true) {
     let sql = 'SELECT id FROM usuarios WHERE activo = TRUE';
     if (soloAdmin) {
-      sql += ` AND id IN (SELECT usuario_id FROM usuario_roles WHERE rol_id IN (SELECT id FROM roles WHERE codigo = 'ADMIN'))`;
+      const ConfiguracionService = require('./configuracionService');
+      const adminRole = await ConfiguracionService.get('seguridad_rol_admin', 'ADMIN');
+      sql += ` AND id IN (SELECT usuario_id FROM usuario_roles WHERE rol_id IN (SELECT id FROM roles WHERE nombre = '${adminRole}'))`;
     }
     const { rows: usuarios } = await db.query(sql);
     const resultados = [];

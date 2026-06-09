@@ -34,6 +34,13 @@ const login = async (req, res) => {
       JOIN usuario_roles ur ON r.id = ur.rol_id WHERE ur.usuario_id = $1
     `, [user.id]);
 
+    const { rows: permisos } = await require('../config/db').query(`
+      SELECT DISTINCT p.codigo FROM permisos p
+      JOIN rol_permisos rp ON p.id = rp.permiso_id
+      JOIN usuario_roles ur ON rp.rol_id = ur.rol_id
+      WHERE ur.usuario_id = $1
+    `, [user.id]);
+
     const tokenPayload = {
       id: user.id,
       username: user.username,
@@ -52,7 +59,8 @@ const login = async (req, res) => {
         nombre_completo: [user.primer_nombre, user.segundo_nombre, user.apellido_paterno, user.apellido_materno].filter(Boolean).join(' '),
         ci: user.ci,
         cargo: user.cargo_actual,
-        roles: roles.map(r => r.nombre)
+        roles: roles.map(r => r.nombre),
+        permisos: permisos.map(p => p.codigo)
       }
     });
   } catch (error) {
@@ -69,6 +77,13 @@ const me = async (req, res) => {
       JOIN usuario_roles ur ON r.id = ur.rol_id WHERE ur.usuario_id = $1
     `, [req.usuario.id]);
 
+    const { rows: permisos } = await require('../config/db').query(`
+      SELECT DISTINCT p.codigo FROM permisos p
+      JOIN rol_permisos rp ON p.id = rp.permiso_id
+      JOIN usuario_roles ur ON rp.rol_id = ur.rol_id
+      WHERE ur.usuario_id = $1
+    `, [req.usuario.id]);
+
     res.json({
       id: user.id,
       username: user.username,
@@ -77,7 +92,8 @@ const me = async (req, res) => {
       nombre_completo: [user.primer_nombre, user.segundo_nombre, user.apellido_paterno, user.apellido_materno].filter(Boolean).join(' '),
       ci: user.ci,
       cargo: user.cargo_actual,
-      roles: roles.map(r => r.nombre)
+      roles: roles.map(r => r.nombre),
+      permisos: permisos.map(p => p.codigo)
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

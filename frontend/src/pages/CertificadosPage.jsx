@@ -3,7 +3,7 @@ import {
   FileText, Plus, Download, Search, CheckCircle2,
   AlertCircle, Printer, Ban, Filter
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TIPOS = [
   { codigo: 'TRABAJO', nombre: 'Certificado de Trabajo' },
@@ -41,7 +41,7 @@ const CertificadosPage = () => {
       let url = `${API_BASE_URL}/api/certificados?limit=100`;
       if (filtros.tipo) url += `&tipo=${filtros.tipo}`;
       if (filtros.estado) url += `&estado=${filtros.estado}`;
-      const res = await fetch(url);
+      const res = await authFetch(url);
       if (res.ok) setCertificados(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -49,14 +49,14 @@ const CertificadosPage = () => {
 
   const fetchResumen = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/certificados/resumen`);
+      const res = await authFetch(`${API_BASE_URL}/api/certificados/resumen`);
       if (res.ok) setResumen(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchPersonal = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/personal?limit=300`);
+      const res = await authFetch(`${API_BASE_URL}/api/personal?limit=300`);
       if (res.ok) {
         const json = await res.json();
         setPersonalList(json.data || []);
@@ -68,7 +68,7 @@ const CertificadosPage = () => {
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/certificados/generar`, {
+      const res = await authFetch(`${API_BASE_URL}/api/certificados/generar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -97,7 +97,7 @@ const CertificadosPage = () => {
 
   const downloadPDF = async (id, filename) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/certificados/${id}/pdf`);
+      const res = await authFetch(`${API_BASE_URL}/api/certificados/${id}/pdf`);
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -112,7 +112,7 @@ const CertificadosPage = () => {
 
   const cambiarEstado = async (id, estado) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/certificados/${id}/estado`, {
+      const res = await authFetch(`${API_BASE_URL}/api/certificados/${id}/estado`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado })

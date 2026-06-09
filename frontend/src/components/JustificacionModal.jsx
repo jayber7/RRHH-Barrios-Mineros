@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const TIPOS = ['ENTRADA', 'SALIDA', 'AMBOS', 'FALTA', 'ATRASO'];
 
@@ -19,7 +19,7 @@ const JustificacionModal = ({ isOpen, onClose, onSave, personalId, fecha }) => {
 
   useEffect(() => {
     if (isOpen) {
-      fetch(`${API_BASE_URL}/api/sanciones/motivos`)
+      authFetch(`${API_BASE_URL}/api/sanciones/motivos`)
         .then(r => r.json())
         .then(setMotivos)
         .catch(() => {});
@@ -31,7 +31,7 @@ const JustificacionModal = ({ isOpen, onClose, onSave, personalId, fecha }) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/justificaciones`, {
+      const res = await authFetch(`${API_BASE_URL}/api/justificaciones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

@@ -7,6 +7,22 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState({});
+
+  const fetchConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await axios.get(`${API_BASE_URL}/api/configuracion`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const cfg = {};
+      res.data.forEach(item => {
+        cfg[item.clave] = item.valor;
+      });
+      setConfig(cfg);
+    } catch (e) { console.error('Error fetching config', e); }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -14,7 +30,10 @@ export function AuthProvider({ children }) {
       axios.get(`${API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-        .then(res => setUsuario(res.data))
+        .then(res => {
+          setUsuario(res.data);
+          fetchConfig();
+        })
         .catch(() => {
           localStorage.removeItem('token');
           setUsuario(null);
@@ -29,6 +48,7 @@ export function AuthProvider({ children }) {
     const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { username, password });
     localStorage.setItem('token', res.data.token);
     setUsuario(res.data.usuario);
+    await fetchConfig();
     return res.data.usuario;
   };
 
@@ -68,8 +88,14 @@ export function AuthProvider({ children }) {
     return instance;
   };
 
+  const can = (permiso) => {
+    const adminRole = config.seguridad_rol_admin || 'ADMIN';
+    if (usuario?.roles?.includes(adminRole)) return true;
+    return usuario?.permisos?.includes(permiso);
+  };
+
   return (
-    <AuthContext.Provider value={{ usuario, loading, login, logout, cambiarPassword, token: token(), authAxios }}>
+    <AuthContext.Provider value={{ usuario, loading, config, login, logout, cambiarPassword, token: token(), authAxios, can, refreshConfig: fetchConfig }}>
       {children}
     </AuthContext.Provider>
   );

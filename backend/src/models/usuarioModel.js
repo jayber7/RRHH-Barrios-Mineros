@@ -31,6 +31,7 @@ class UsuarioModel {
   static async createFromPersonal(personalId, ci) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(ci, salt);
+    const ConfiguracionService = require('../services/configuracionService');
 
     const { rows } = await db.query(`
       INSERT INTO usuarios (personal_id, username, password_hash, password_cambiado)
@@ -40,11 +41,13 @@ class UsuarioModel {
       RETURNING id, username, personal_id
     `, [personalId, ci, passwordHash]);
 
+    const defaultRole = await ConfiguracionService.get('seguridad_rol_default', 'GENERAL');
+
     await db.query(`
       INSERT INTO usuario_roles (usuario_id, rol_id)
-      SELECT $1, id FROM roles WHERE nombre = 'AUXILIAR'
+      SELECT $1, id FROM roles WHERE nombre = $2
       ON CONFLICT DO NOTHING
-    `, [rows[0].id]);
+    `, [rows[0].id, defaultRole]);
 
     return rows[0];
   }
@@ -100,6 +103,32 @@ class UsuarioModel {
     } finally {
       client.release();
     }
+  }
+
+  static async bulkAssignRole(userIds, roleId) {
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      for (const userId of userIds) {
+        await client.query(
+          'INSERT INTO usuario_roles (usuario_id, rol_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [userId, roleId]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async bulkRemoveRole(userIds, roleId) {
+    await db.query(
+      'DELETE FROM usuario_roles WHERE usuario_id = ANY($1) AND rol_id = $2',
+      [userIds, roleId]
+    );
   }
 
   static async toggleActivo(id) {

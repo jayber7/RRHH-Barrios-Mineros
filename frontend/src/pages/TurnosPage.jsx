@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, Users, Clock, Search, Pencil, Trash2, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL, authFetch } from '../config/api';
 import TurnoPlantillaForm from '../components/TurnoPlantillaForm';
 import TurnoAsignacionForm from '../components/TurnoAsignacionForm';
 import TurnoCalendario from '../components/TurnoCalendario';
@@ -12,6 +13,7 @@ const TABS = [
 ];
 
 const TurnosPage = () => {
+  const { can } = useAuth();
   const [activeTab, setActiveTab] = useState('plantillas');
   const [plantillas, setPlantillas] = useState([]);
   const [asignados, setAsignados] = useState([]);
@@ -40,7 +42,7 @@ const TurnosPage = () => {
 
   const fetchPlantillas = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/plantilla`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/plantilla`);
       const data = await res.json();
       setPlantillas(data);
       setTimeout(checkScroll, 50);
@@ -49,7 +51,7 @@ const TurnosPage = () => {
 
   const fetchYears = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/years`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/years`);
       const data = await res.json();
       setYears(data);
       if (data.length > 0) setYearFilter(data[0].toString());
@@ -63,7 +65,7 @@ const TurnosPage = () => {
       if (filtroBuscar) params.set('q', filtroBuscar);
       params.set('page', page.toString());
       params.set('limit', '50');
-      const res = await fetch(`${API_BASE_URL}/api/turnos/asignados?${params}`);
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/asignados?${params}`);
       const data = await res.json();
       if (data.data) {
         setAsignados(data.data);
@@ -76,7 +78,7 @@ const TurnosPage = () => {
 
   const fetchPersonal = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/personal?limit=1000`);
+      const res = await authFetch(`${API_BASE_URL}/api/personal?limit=1000`);
       const data = await res.json();
       setPersonal(data.data || data || []);
     } catch (e) { console.error(e); }
@@ -101,7 +103,7 @@ const TurnosPage = () => {
   const handleDeletePlantilla = async (id) => {
     if (!window.confirm('¿Eliminar plantilla?')) return;
     try {
-      await fetch(`${API_BASE_URL}/api/turnos/plantilla/${id}`, { method: 'DELETE' });
+      await authFetch(`${API_BASE_URL}/api/turnos/plantilla/${id}`, { method: 'DELETE' });
       fetchPlantillas();
     } catch (e) { alert('Error al eliminar'); }
   };
@@ -109,7 +111,7 @@ const TurnosPage = () => {
   const handleDeleteAsignado = async (id) => {
     if (!window.confirm('¿Eliminar asignación?')) return;
     try {
-      await fetch(`${API_BASE_URL}/api/turnos/asignados/${id}`, { method: 'DELETE' });
+      await authFetch(`${API_BASE_URL}/api/turnos/asignados/${id}`, { method: 'DELETE' });
       fetchAsignados();
     } catch (e) { alert('Error al eliminar'); }
   };
@@ -120,7 +122,7 @@ const TurnosPage = () => {
     if (!window.confirm(`Copiar asignaciones de ${desde} a ${hasta}?`)) return;
     setClonando(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/turnos/clonar`, {
+      const res = await authFetch(`${API_BASE_URL}/api/turnos/clonar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ desde, hasta }),
@@ -155,9 +157,11 @@ const TurnosPage = () => {
       {activeTab === 'plantillas' && (
         <div className="space-y-6">
           <div className="flex justify-end">
-            <button onClick={() => { setShowForm(true); setEditing(null); }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all bg-blue-600 text-white hover:bg-blue-700"
-            ><Plus size={18} /> Nueva Plantilla</button>
+            {can('turnos.gestionar') && (
+              <button onClick={() => { setShowForm(true); setEditing(null); }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all bg-blue-600 text-white hover:bg-blue-700"
+              ><Plus size={18} /> Nueva Plantilla</button>
+            )}
           </div>
 
           {showForm && (

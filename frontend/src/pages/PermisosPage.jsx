@@ -3,7 +3,7 @@ import {
   FileBadge, Plus, Search, CheckCircle2, XCircle,
   Clock, AlertCircle, Filter, Ban
 } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const ESTADOS = {
   PENDIENTE: { label: 'Pendiente', class: 'bg-amber-50 text-amber-600' },
@@ -63,7 +63,7 @@ const PermisosPage = () => {
       let url = `${API_BASE_URL}/api/permisos?limit=100`;
       if (filtros.tipo) url += `&tipo=${filtros.tipo}`;
       if (filtros.estado) url += `&estado=${filtros.estado}`;
-      const res = await fetch(url);
+      const res = await authFetch(url);
       if (res.ok) setPermisos(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -71,28 +71,28 @@ const PermisosPage = () => {
 
   const fetchResumen = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permisos/resumen`);
+      const res = await authFetch(`${API_BASE_URL}/api/permisos/resumen`);
       if (res.ok) setResumen(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchTipos = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permisos/tipos`);
+      const res = await authFetch(`${API_BASE_URL}/api/permisos/tipos`);
       if (res.ok) setTipos(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permisos/stats`);
+      const res = await authFetch(`${API_BASE_URL}/api/permisos/stats`);
       if (res.ok) setStats(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchPersonal = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/personal?limit=300`);
+      const res = await authFetch(`${API_BASE_URL}/api/personal?limit=300`);
       if (res.ok) {
         const json = await res.json();
         setPersonalList(json.data || []);
@@ -103,7 +103,7 @@ const PermisosPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permisos`, {
+      const res = await authFetch(`${API_BASE_URL}/api/permisos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,7 +132,7 @@ const PermisosPage = () => {
 
   const cambiarEstado = async (id, estado) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permisos/${id}/estado`, {
+      const res = await authFetch(`${API_BASE_URL}/api/permisos/${id}/estado`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado })

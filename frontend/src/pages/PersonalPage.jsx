@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import { 
   Search, Download, Upload, UserPlus, Edit, Calendar, Phone, IdCard, 
   ChevronLeft, ChevronRight, History, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown 
@@ -8,9 +8,10 @@ import PersonalForm from '../components/PersonalForm';
 import HistorialModal from '../components/HistorialModal';
 import ContratosAlertasModal from '../components/ContratosAlertasModal';
 import ImportResultsModal from '../components/ImportResultsModal';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, api } from '../config/api';
 
 const PersonalPage = () => {
+  const { can } = useAuth();
   const [personal, setPersonal] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [catalogos, setCatalogos] = useState({ expediciones: [], profesiones: [] });
@@ -26,12 +27,15 @@ const PersonalPage = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchPersonal(1);
-    fetchCatalogos();
+    if (can('personal.ver')) {
+      fetchPersonal(1);
+      fetchCatalogos();
+    }
   }, []);
 
   // Efecto para búsquedas con debounce o al cambiar filtros
   useEffect(() => {
+    if (!can('personal.ver')) return;
     const timer = setTimeout(() => {
       fetchPersonal(1);
     }, 300);
@@ -39,7 +43,9 @@ const PersonalPage = () => {
   }, [filters]);
 
   useEffect(() => {
-    fetchPersonal(1);
+    if (can('personal.ver')) {
+      fetchPersonal(1);
+    }
   }, [sortConfig]);
 
   const fetchPersonal = async (page = 1) => {
@@ -55,7 +61,7 @@ const PersonalPage = () => {
         params.sort = sortConfig.column;
         params.order = sortConfig.direction;
       }
-      const response = await axios.get(`${API_BASE_URL}/api/personal`, { params });
+      const response = await api.get(`/api/personal`, { params });
       setPersonal(response.data.data);
       setPagination(response.data.pagination);
     } catch (error) {
@@ -67,7 +73,7 @@ const PersonalPage = () => {
 
   const fetchCatalogos = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/personal/catalogos`);
+      const response = await api.get(`/api/personal/catalogos`);
       setCatalogos(response.data);
     } catch (error) {
       console.error('Error fetching catalogos:', error);
@@ -98,9 +104,9 @@ const PersonalPage = () => {
   const handleSave = async (data) => {
     try {
       if (selectedPersonal) {
-        await axios.put(`${API_BASE_URL}/api/personal/${selectedPersonal.id}`, data);
+        await api.put(`/api/personal/${selectedPersonal.id}`, data);
       } else {
-        await axios.post(`${API_BASE_URL}/api/personal`, data);
+        await api.post(`/api/personal`, data);
       }
       setShowForm(false);
       setSelectedPersonal(null);
@@ -127,7 +133,7 @@ const PersonalPage = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${API_BASE_URL}/api/personal/import`, formData);
+      const response = await api.post(`/api/personal/import`, formData);
       setImportResults(response.data);
       setShowImportResults(true);
       fetchPersonal();
@@ -164,30 +170,34 @@ const PersonalPage = () => {
           <p className="text-slate-500 text-sm">Control y administración de recursos humanos del Hospital Barrios Mineros</p>
         </div>
         <div className="flex gap-2">
-          <button 
-            onClick={() => { setSelectedPersonal(null); setShowForm(true); }}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <UserPlus size={18} /> Nuevo Registro
-          </button>
-          <button 
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <Download size={18} /> Exportar
-          </button>
-          <button 
-            onClick={() => fileInputRef.current.click()}
-            className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors shadow-sm"
-          >
-            <Upload size={18} /> Importar
-          </button>
-          <button 
-            onClick={() => setShowContratosAlertas(true)}
-            className="flex items-center gap-2 bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors shadow-sm"
-          >
-            <AlertCircle size={18} /> Alertas de Contratos
-          </button>
+          {can('personal.gestionar') && (
+            <>
+              <button 
+                onClick={() => { setSelectedPersonal(null); setShowForm(true); }}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <UserPlus size={18} /> Nuevo Registro
+              </button>
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+              >
+                <Download size={18} /> Exportar
+              </button>
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors shadow-sm"
+              >
+                <Upload size={18} /> Importar
+              </button>
+              <button 
+                onClick={() => setShowContratosAlertas(true)}
+                className="flex items-center gap-2 bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors shadow-sm"
+              >
+                <AlertCircle size={18} /> Alertas de Contratos
+              </button>
+            </>
+          )}
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -328,13 +338,15 @@ const PersonalPage = () => {
                         >
                           <History size={15} /> Historial
                         </button>
-                        <button 
-                          onClick={() => { setSelectedPersonal(p); setShowForm(true); }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                          title="Editar registro"
-                        >
-                          <Edit size={18} />
-                        </button>
+                        {can('personal.gestionar') && (
+                          <button 
+                            onClick={() => { setSelectedPersonal(p); setShowForm(true); }}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Editar registro"
+                          >
+                            <Edit size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

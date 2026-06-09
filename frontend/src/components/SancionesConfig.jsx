@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Save, Trash2, X } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authFetch } from '../config/api';
 
 const SancionesConfig = () => {
   const [sancionesAtrasos, setSancionesAtrasos] = useState([]);
@@ -11,8 +11,8 @@ const SancionesConfig = () => {
   const fetchData = async () => {
     try {
       const [at, fa] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/sanciones/atrasos`).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/sanciones/faltas`).then(r => r.json()),
+        authFetch(`${API_BASE_URL}/api/sanciones/atrasos`).then(r => r.json()),
+        authFetch(`${API_BASE_URL}/api/sanciones/faltas`).then(r => r.json()),
       ]);
       setSancionesAtrasos(at);
       setSancionesFaltas(fa);
@@ -24,7 +24,7 @@ const SancionesConfig = () => {
   const handleDelete = async (tipo, id) => {
     if (!window.confirm('¿Eliminar sanción?')) return;
     try {
-      await fetch(`${API_BASE_URL}/api/sanciones/${tipo}/${id}`, { method: 'DELETE' });
+      await authFetch(`${API_BASE_URL}/api/sanciones/${tipo}/${id}`, { method: 'DELETE' });
       fetchData();
     } catch (e) { alert('Error'); }
   };
@@ -33,7 +33,7 @@ const SancionesConfig = () => {
     if (!newItem || !newItem.rango_inicial || !newItem.rango_final) return alert('Complete todos los campos');
     try {
       const endpoint = tipo === 'atrasos' ? 'atrasos' : 'faltas';
-      await fetch(`${API_BASE_URL}/api/sanciones/${endpoint}`, {
+      await authFetch(`${API_BASE_URL}/api/sanciones/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newItem),

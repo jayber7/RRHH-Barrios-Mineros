@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const configController = require('../controllers/configController');
-const { authMiddleware, checkRole } = require('../middleware/authMiddleware');
+const { authMiddleware, checkPermission } = require('../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
-router.get('/cite', configController.getCiteConfig);
-router.put('/cite', checkRole('ADMIN'), configController.updateCiteConfig);
+router.get('/cite', checkPermission('config.ver'), configController.getCiteConfig);
+router.put('/cite', checkPermission('config.editar'), configController.updateCiteConfig);
 
-router.get('/etiquetas', configController.getEtiquetas);
-router.post('/etiquetas', checkRole('ADMIN'), configController.createEtiqueta);
-router.delete('/etiquetas/:id', checkRole('ADMIN'), configController.deleteEtiqueta);
+router.get('/etiquetas', checkPermission('config.ver'), configController.getEtiquetas);
+router.post('/etiquetas', checkPermission('config.editar'), configController.createEtiqueta);
+router.delete('/etiquetas/:id', checkPermission('config.editar'), configController.deleteEtiqueta);
 
 module.exports = router;

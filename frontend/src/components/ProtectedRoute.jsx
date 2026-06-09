@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children, roles }) {
-  const { usuario, loading } = useAuth();
+  const { usuario, loading, config } = useAuth();
 
   if (loading) {
     return (
@@ -16,7 +16,12 @@ export default function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles && !roles.some(r => usuario.roles?.includes(r))) {
+  const adminRole = config?.seguridad_rol_admin || 'ADMIN';
+  const isAuthorized = !roles || 
+                       roles.some(r => usuario.roles?.includes(r)) || 
+                       usuario.roles?.includes(adminRole);
+
+  if (!isAuthorized) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-red-600">Acceso Denegado</h2>
