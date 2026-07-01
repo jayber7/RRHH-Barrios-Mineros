@@ -70,6 +70,11 @@ class BiometricoController {
 
   static async importarEmpleados(req, res) {
     try {
+      if (req.body.empleados) {
+        const result = await BiometricoImportService.importarEmpleadosDirecto(req.body.empleados);
+        return res.json(result);
+      }
+
       const ruta = req.body?.ruta || req.query?.ruta || process.env.ZKTIMENET_DB_PATH;
       if (!ruta) return res.status(400).json({ error: 'Ruta de ZKTimeNet.db no especificada' });
 
@@ -82,6 +87,11 @@ class BiometricoController {
 
   static async importarMarcaciones(req, res) {
     try {
+      if (req.body.marcaciones) {
+        const result = await BiometricoImportService.importarMarcacionesDirecto(req.body.marcaciones);
+        return res.json(result);
+      }
+
       const ruta = req.body?.ruta || req.query?.ruta || process.env.ZKTIMENET_DB_PATH;
       if (!ruta) return res.status(400).json({ error: 'Ruta de ZKTimeNet.db no especificada' });
 

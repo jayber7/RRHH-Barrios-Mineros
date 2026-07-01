@@ -149,6 +149,82 @@ class BiometricoImportService {
     }
   }
 
+  static async importarEmpleadosDirecto(empleados) {
+    let insertados = 0;
+    let actualizados = 0;
+
+    for (const emp of empleados) {
+      const exists = await db.query('SELECT 1 FROM biometrico_usuarios WHERE emp_pin = $1', [String(emp.emp_pin)]);
+      await db.query(`
+        INSERT INTO biometrico_usuarios 
+          (emp_pin, emp_code, emp_ssn, primer_nombre, apellidos, emp_dept_id, dept_name, emp_active, emp_hiredate, emp_birthday, emp_phone, emp_title, emp_gender, emp_cardNumber, emp_email)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        ON CONFLICT (emp_pin) DO UPDATE SET
+          primer_nombre = EXCLUDED.primer_nombre,
+          apellidos = EXCLUDED.apellidos,
+          emp_dept_id = EXCLUDED.emp_dept_id,
+          dept_name = EXCLUDED.dept_name,
+          emp_active = EXCLUDED.emp_active,
+          emp_hiredate = EXCLUDED.emp_hiredate,
+          emp_birthday = EXCLUDED.emp_birthday,
+          emp_phone = EXCLUDED.emp_phone,
+          emp_title = EXCLUDED.emp_title,
+          emp_cardNumber = EXCLUDED.emp_cardNumber,
+          emp_email = EXCLUDED.emp_email
+      `, [
+        String(emp.emp_pin),
+        emp.emp_code || null,
+        emp.emp_ssn || null,
+        emp.primer_nombre || null,
+        emp.apellidos || null,
+        emp.emp_dept_id || null,
+        emp.dept_name || null,
+        emp.emp_active ?? 1,
+        emp.emp_hiredate || null,
+        emp.emp_birthday || null,
+        emp.emp_phone || null,
+        emp.emp_title || null,
+        emp.emp_gender ?? null,
+        emp.emp_cardNumber || null,
+        emp.emp_email || null
+      ]);
+
+      if (exists.rowCount > 0) actualizados++;
+      else insertados++;
+    }
+
+    return { total: empleados.length, insertados, actualizados };
+  }
+
+  static async importarMarcacionesDirecto(marcaciones) {
+    let importados = 0;
+    const CHUNK = 5000;
+
+    for (let i = 0; i < marcaciones.length; i += CHUNK) {
+      const chunk = marcaciones.slice(i, i + CHUNK);
+      const placeholders = chunk.map((_, j) => {
+        const b = j * 6;
+        return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6})`;
+      }).join(',');
+      const vals = chunk.flatMap(r => [
+        String(r.biometrico_id), r.timestamp, r.verificacion_tipo ?? 0,
+        r.estado_asistencia ?? 0, r.device_ip || 'REMOTE_IMPORT', r.origen || 'REMOTE'
+      ]);
+      const result = await db.query(`
+        INSERT INTO biometrico_logs_raw (biometrico_id, timestamp, verificacion_tipo, estado_asistencia, device_ip, origen)
+        VALUES ${placeholders}
+        ON CONFLICT (biometrico_id, timestamp) DO NOTHING
+      `, vals);
+      importados += result.rowCount || 0;
+    }
+
+    return {
+      totalProcesados: marcaciones.length,
+      importados,
+      duplicados: marcaciones.length - importados
+    };
+  }
+
   static async getStatsImportacion() {
     const result = await db.query(`
       SELECT 
