@@ -2,11 +2,12 @@ const ZKLib = require('node-zklib');
 const db = require('../config/db');
 
 class BiometricoService {
-  /**
-   * Intenta conectar con el equipo biométrico
-   */
   static async connectToDevice(ip, port, commsKey) {
-    const device = new ZKLib(ip, port, 10000, 4000);
+    const options = { timeout: 10000, pollingInterval: 4000 };
+    if (commsKey && commsKey !== '0') {
+      options.commKey = parseInt(commsKey);
+    }
+    const device = new ZKLib(ip, port, options);
     try {
       await device.createSocket();
       return device;
@@ -16,9 +17,6 @@ class BiometricoService {
     }
   }
 
-  /**
-   * Sincroniza los usuarios del biométrico con la tabla temporal o sugiere vinculaciones
-   */
   static async syncUsers() {
     const { rows: config } = await db.query('SELECT * FROM biometrico_config LIMIT 1');
     if (config.length === 0) throw new Error('No hay configuración de biométrico');
@@ -26,8 +24,6 @@ class BiometricoService {
     const device = await this.connectToDevice(config[0].ip_address, config[0].port);
     try {
       const users = await device.getUsers();
-      // Nota: Aquí se podría implementar una tabla temporal de usuarios 
-      // o simplemente devolver la lista para que el front permita el mapeo.
       
       await db.query('UPDATE biometrico_config SET ultimo_sync_usuarios = CURRENT_TIMESTAMP, estado = \'CONECTADO\' WHERE id = $1', [config[0].id]);
       
@@ -37,9 +33,6 @@ class BiometricoService {
     }
   }
 
-  /**
-   * Obtiene logs nuevos del equipo y los guarda en biometrico_logs_raw
-   */
   static async syncLogs() {
     const { rows: config } = await db.query('SELECT * FROM biometrico_config LIMIT 1');
     if (config.length === 0) throw new Error('No hay configuración de biométrico');
@@ -64,7 +57,6 @@ class BiometricoService {
           ]);
           nuevosRegistros++;
         } catch (e) {
-          // Ignorar duplicados o errores menores en el loop
         }
       }
 
