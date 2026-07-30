@@ -1,8 +1,19 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const API_URL = process.env.RENDER_API_URL || 'https://rrhh-barrios-mineros-api.onrender.com';
+const API_URL = process.env.RENDER_API_URL || 'https://rrhh-barrios-mineros.onrender.com';
 const TOKEN = process.env.RENDER_TOKEN || '';
+
+async function login() {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin' })
+  });
+  if (!res.ok) throw new Error(`Login failed (${res.status}): ${await res.text()}`);
+  const data = await res.json();
+  return data.token;
+}
 
 async function main() {
   const rutaSQLite = process.env.ZKTIMENET_DB_PATH;
@@ -11,11 +22,14 @@ async function main() {
     process.exit(1);
   }
 
+  console.log(`Conectando a ${API_URL}...`);
+  const token = TOKEN || await login();
+  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
   const Database = require('better-sqlite3');
   const sqlite = new Database(rutaSQLite, { readonly: true });
 
   try {
-    // 1. Exportar empleados
     console.log('Leyendo empleados de ZKTimeNet.db...');
     const empleados = sqlite.prepare(`
       SELECT e.*, d.dept_name
@@ -25,7 +39,6 @@ async function main() {
     `).all();
     console.log(`  → ${empleados.length} empleados encontrados`);
 
-    // 2. Exportar marcaciones
     console.log('Leyendo marcaciones de ZKTimeNet.db...');
     const marcaciones = sqlite.prepare(`
       SELECT p.*, e.emp_pin
@@ -35,11 +48,7 @@ async function main() {
     `).all();
     console.log(`  → ${marcaciones.length} marcaciones encontradas`);
 
-    // 3. Enviar a Render
-    const headers = { 'Content-Type': 'application/json' };
-    if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
-
-    console.log(`\nEnviando ${empleados.length} empleados a ${API_URL}...`);
+    console.log(`\nEnviando ${empleados.length} empleados...`);
     const empRes = await fetch(`${API_URL}/api/biometrico/importar-empleados`, {
       method: 'POST',
       headers,
@@ -64,7 +73,7 @@ async function main() {
     const empResult = await empRes.json();
     console.log('  Respuesta:', empResult);
 
-    console.log(`\nEnviando ${marcaciones.length} marcaciones a ${API_URL}...`);
+    console.log(`\nEnviando ${marcaciones.length} marcaciones...`);
     const CHUNK = 5000;
     let totalImportados = 0;
 
@@ -84,7 +93,7 @@ async function main() {
       });
       const marResult = await marRes.json();
       totalImportados += marResult.importados || 0;
-      console.log(`  Lote ${i / CHUNK + 1}/${Math.ceil(marcaciones.length / CHUNK)}: ${marResult.importados || 0} importados`);
+      console.log(`  Lote ${Math.floor(i / CHUNK) + 1}/${Math.ceil(marcaciones.length / CHUNK)}: ${marResult.importados || 0} importados`);
     }
 
     console.log(`\n✅ Sincronización completada`);
