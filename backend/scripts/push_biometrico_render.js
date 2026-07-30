@@ -84,7 +84,7 @@ async function main() {
         headers,
         body: JSON.stringify({ marcaciones: chunk.map(m => ({
           biometrico_id: String(m.emp_pin),
-          timestamp: m.punch_time,
+          timestamp: /[+-]\d{2}:\d{2}$/.test(m.punch_time) || m.punch_time.endsWith('Z') ? m.punch_time : m.punch_time + '-04:00',
           verificacion_tipo: m.workcode ?? 0,
           estado_asistencia: m.workstate ?? 0,
           device_ip: 'REMOTE_IMPORT',

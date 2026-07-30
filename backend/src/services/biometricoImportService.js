@@ -1,6 +1,11 @@
 const path = require('path');
 const db = require('../config/db');
 
+function ensureBoliviaTz(ts) {
+  if (!ts || /[+-]\d{2}:\d{2}$/.test(ts) || ts.endsWith('Z')) return ts;
+  return ts + '-04:00';
+}
+
 class BiometricoImportService {
 
   static async importarEmpleados(rutaSQLite) {
@@ -121,7 +126,7 @@ class BiometricoImportService {
           return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6})`;
         }).join(',');
         const vals = chunk.flatMap(r => [
-          String(r.emp_pin), r.punch_time, r.workcode ?? 0,
+          String(r.emp_pin), ensureBoliviaTz(r.punch_time), r.workcode ?? 0,
           r.workstate ?? 0, 'SQLITE_IMPORT', 'HISTORICO'
         ]);
         const result = await db.query(`
@@ -207,7 +212,7 @@ class BiometricoImportService {
         return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6})`;
       }).join(',');
       const vals = chunk.flatMap(r => [
-        String(r.biometrico_id), r.timestamp, r.verificacion_tipo ?? 0,
+        String(r.biometrico_id), ensureBoliviaTz(r.timestamp), r.verificacion_tipo ?? 0,
         r.estado_asistencia ?? 0, r.device_ip || 'REMOTE_IMPORT', r.origen || 'REMOTE'
       ]);
       const result = await db.query(`
