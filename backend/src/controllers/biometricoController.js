@@ -346,6 +346,26 @@ class BiometricoController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  static async importarZkTimeten(req, res) {
+    const fs = require('fs');
+    const path = require('path');
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ningún archivo' });
+    }
+
+    const ruta = req.file.path;
+    const { desde, hasta } = req.body;
+    try {
+      const empleados = await BiometricoImportService.importarEmpleados(ruta);
+      const marcaciones = await BiometricoImportService.importarMarcaciones(ruta, desde, hasta);
+      res.json({ empleados, marcaciones });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    } finally {
+      try { fs.unlinkSync(ruta); } catch (e) { /* ya borrado */ }
+    }
+  }
 }
 
 module.exports = BiometricoController;

@@ -263,6 +263,10 @@ const ImportTab = ({ showStatus }) => {
   const [loadingStats, setLoadingStats] = useState(true);
   const [rangoDesde, setRangoDesde] = useState('2021-01-01');
   const [rangoHasta, setRangoHasta] = useState('2026-12-31');
+  const [archivo, setArchivo] = useState(null);
+  const [subiendoZK, setSubiendoZK] = useState(false);
+  const [job, setJob] = useState(null);
+  const [jobPct, setJobPct] = useState(0);
 
   const fetchStats = async () => {
     setLoadingStats(true);
@@ -299,6 +303,70 @@ const ImportTab = ({ showStatus }) => {
       showStatus('error', e.response?.data?.error || e.message);
     } finally { setImportingMarc(false); }
   };
+
+  const handleSubirZK = async () => {
+    if (!archivo) {
+      showStatus('error', 'Seleccioná el archivo ZKTimeNet.db');
+      return;
+    }
+    setSubiendoZK(true);
+    try {
+      const fd = new FormData();
+      fd.append('archivo', archivo);
+      fd.append('desde', rangoDesde);
+      fd.append('hasta', rangoHasta);
+      const res = await api.post('/api/biometrico/importar-zktimeten', fd, {
+        timeout: 0,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      showStatus('success',
+        `Importación completada. Empleados: ${res.data.empleados?.insertados ?? 0} nuevos, ${res.data.empleados?.actualizados ?? 0} actualizados. ` +
+        `Marcaciones: ${res.data.marcaciones?.importados ?? 0} nuevas.`);
+      setArchivo(null);
+      fetchStats();
+    } catch (e) {
+      showStatus('error', e.response?.data?.error || e.message);
+    } finally { setSubiendoZK(false); }
+  };
+
+  const handleCalcularTodos = async () => {
+    const mes = parseInt(rangoHasta.slice(0, 7).split('-')[1]);
+    const anio = parseInt(rangoHasta.slice(0, 4));
+    try {
+      const res = await api.post('/api/asistencia/calcular-todos', { mes, anio });
+      setJob(res.data.jobId);
+      setJobPct(0);
+      showStatus('success', `Cálculo iniciado (job #${res.data.jobId}). Recargar la pestaña para ver los resultados.`);
+    } catch (e) {
+      showStatus('error', e.response?.data?.error || e.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!job) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await api.get('/api/asistencia/calcular-todos/estado', { params: { job_id: job } });
+        const j = res.data;
+        setJobPct(j.total > 0 ? Math.round((j.procesados / j.total) * 100) : 0);
+        if (j.estado === 'completado') {
+          setJob(null);
+          showStatus('success', `Cálculo completado: ${j.procesados} empleados procesados (${j.mes}/${j.anio})`);
+          fetchStats();
+        } else if (j.estado === 'error') {
+          setJob(null);
+          showStatus('error', `Error en cálculo: ${j.detalle || 'desconocido'}`);
+        }
+      } catch (e) {
+        setJob(null);
+      }
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [job]);
+
+  const jobMsg = job
+    ? jobPct >= 100 ? 'Finalizando...' : `Recalculando asistencia... ${jobPct}%`
+    : '';
 
   return (
     <div className="space-y-8">
@@ -342,15 +410,22 @@ const ImportTab = ({ showStatus }) => {
           </button>
         </div>
 
-        {/* Marcaciones */}
+        {/* Subir ZKTimeNet.db */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><Database size={20} /></div>
-            <h3 className="font-bold text-slate-800 text-lg">Importar Marcaciones</h3>
+            <h3 className="font-bold text-slate-800 text-lg">Subir ZKTimeNet.db</h3>
           </div>
           <p className="text-sm text-slate-500 mb-4">
-            Importa las 456,531 marcaciones históricas desde ZKTimeNet.db (2021-2026).
+            Subí el archivo <code className="bg-slate-100 px-2 py-0.5 rounded text-xs">Sources/ZKTimeNet.db</code> del software ZKTimeNet.
+            Se importan empleados y marcaciones del rango elegido (dedupe automático).
           </p>
+          <div className="mb-4">
+            <label className="text-xs font-bold text-slate-400 uppercase">Archivo</label>
+            <input type="file" accept=".db" onChange={e => setArchivo(e.target.files?.[0] || null)}
+              className="w-full mt-1 px-3 py-2.5 bg-slate-50 border-none rounded-xl text-sm file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-emerald-600 file:text-white file:font-bold hover:file:bg-emerald-700" />
+            {archivo && <p className="text-xs text-slate-400 mt-1">{archivo.name} · {(archivo.size / 1024 / 1024).toFixed(1)} MB</p>}
+          </div>
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase">Desde</label>
@@ -363,11 +438,59 @@ const ImportTab = ({ showStatus }) => {
                 className="w-full mt-1 px-3 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm" />
             </div>
           </div>
-          <button onClick={handleImportMarcaciones} disabled={importingMarc}
+          <button onClick={handleSubirZK} disabled={subiendoZK || importingMarc}
             className="flex items-center justify-center gap-2 w-full bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-emerald-700 transition-all disabled:bg-slate-300">
-            <Download size={20} className={importingMarc ? 'animate-bounce' : ''} />
-            {importingMarc ? 'Importando...' : 'Importar Marcaciones Históricas'}
+            <Upload size={20} className={subiendoZK ? 'animate-bounce' : ''} />
+            {subiendoZK ? 'Subiendo e importando...' : 'Subir e Importar'}
           </button>
+        </div>
+
+        {/* Recalcular asistencia */}
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><RefreshCw size={20} /></div>
+            <h3 className="font-bold text-slate-800 text-lg">Recalcular Asistencia</h3>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">
+            Recalcula las horas y atrasos de todos los empleados con marcaciones del mes indicado.
+            Corre en segundo plano y podés seguir navegando.
+          </p>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase">Mes</label>
+              <select value={rangoHasta.slice(0, 7)} onChange={e => { const [y, m] = e.target.value.split('-'); setRangoHasta(`${y}-${m}-${rangoHasta.slice(8)}`); }}
+                className="w-full mt-1 px-3 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
+                {[...Array(12)].map((_, i) => {
+                  const m = (i + 1).toString().padStart(2, '0');
+                  const y = parseInt(rangoHasta.slice(0, 4));
+                  return <option key={m} value={`${y}-${m}`}>{(i + 1)} / {y}</option>;
+                })}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase">Año</label>
+              <select value={rangoHasta.slice(0, 4)} onChange={e => setRangoHasta(`${e.target.value}-${rangoHasta.slice(5, 7)}-${rangoHasta.slice(8)}`)}
+                className="w-full mt-1 px-3 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
+                {[2021, 2022, 2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          </div>
+          <button onClick={handleCalcularTodos} disabled={!!job}
+            className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:bg-slate-300">
+            <RefreshCw size={20} className={job ? 'animate-spin' : ''} />
+            {job ? 'Calculando...' : 'Recalcular todos'}
+          </button>
+          {job && (
+            <div className="mt-4">
+              <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                <span>{jobMsg}</span>
+                <span>{jobPct}%</span>
+              </div>
+              <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${jobPct}%` }} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -934,6 +1057,23 @@ const AttendanceTab = ({ showStatus }) => {
     }
   };
 
+  const exportarPdfContrato = async (ids) => {
+    try {
+      const res = await api.post('/api/reportes/asistencia/contrato', { ids, desde, hasta }, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_eventos_retrasos_faltas_${desde}_${hasta}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('success', 'PDF generado correctamente');
+    } catch (e) {
+      showStatus('error', e.response?.data?.error || e.message);
+    }
+  };
+
   const toggleSeleccion = (id) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -1076,6 +1216,13 @@ const AttendanceTab = ({ showStatus }) => {
                     className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors">
                     <FileSpreadsheet size={16} />
                     Imprimir ({selectedIds.size})
+                  </button>
+                )}
+                {selectedIds.size > 0 && (
+                  <button onClick={() => exportarPdfContrato([...selectedIds])}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-700 transition-colors">
+                    <FileDown size={16} />
+                    Reporte por Contrato ({selectedIds.size})
                   </button>
                 )}
               </div>

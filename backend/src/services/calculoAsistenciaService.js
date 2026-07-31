@@ -14,7 +14,7 @@ class CalculoAsistenciaService {
     return turno[nocturnoKey] === true || (entradaMinutos >= salidaMinutos && salidaMinutos > 0);
   }
 
-  static async calcularEstadoDiario(personalId, fecha) {
+  static async calcularEstadoDiario(personalId, fecha, toleranciaOverride = null) {
     const fechaObj = new Date(fecha);
     const diaSemana = fechaObj.getDay();
     const diasMap = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes', 6: 'sabado', 0: 'domingo' };
@@ -47,7 +47,7 @@ class CalculoAsistenciaService {
       SELECT timestamp, verificacion_tipo,
              to_char(timestamp AT TIME ZONE 'America/La_Paz', 'HH24:MI') as hora
       FROM biometrico_logs_raw
-      WHERE biometrico_id::text = (SELECT biometrico_id::text FROM personal WHERE id = $1)
+      WHERE biometrico_id = (SELECT biometrico_id FROM personal WHERE id = $1)
         AND timestamp >= $2::date AT TIME ZONE 'America/La_Paz' + $3::interval
         AND timestamp < ($2::date AT TIME ZONE 'America/La_Paz') + interval '1 day' + $3::interval
       ORDER BY timestamp ASC
@@ -56,7 +56,7 @@ class CalculoAsistenciaService {
     if (logs.length === 0) return { estado: 9, minutos_atraso: 0, horas_turno: 0 };
 
     const llegadaMinutos = this._timeToMin(logs[0].hora);
-    const tolerancia = turno.tolerancia_atraso || (await ConfiguracionService.get('tolerancia_atraso_default', 5));
+    const tolerancia = toleranciaOverride ?? (turno.tolerancia_atraso || (await ConfiguracionService.get('tolerancia_atraso_default', 5)));
     let minutosAtraso = Math.max(0, llegadaMinutos - entradaMinutos - tolerancia);
 
     const umbralAtrasoHoras = await ConfiguracionService.get('umbral_maximo_atraso_horas', 4);
@@ -141,17 +141,19 @@ class CalculoAsistenciaService {
     return { personal_id: personalId, mes, anio, totalHoras, totalAtrasos };
   }
 
-  static async procesarTodos(mes, anio) {
+  static async procesarTodos(mes, anio, onProgress = null) {
     const { rows: personal } = await db.query(`
       SELECT DISTINCT p.id FROM personal p
-      JOIN biometrico_logs_raw br ON br.biometrico_id::text = p.biometrico_id::text
+      JOIN biometrico_logs_raw br ON br.biometrico_id = p.biometrico_id
       WHERE EXTRACT(YEAR FROM br.timestamp) = $1 AND EXTRACT(MONTH FROM br.timestamp) = $2
     `, [anio, mes]);
     const resultados = [];
+    const total = personal.length;
 
-    for (const p of personal) {
-      const result = await this.procesarMes(p.id, mes, anio);
+    for (let i = 0; i < total; i++) {
+      const result = await this.procesarMes(personal[i].id, mes, anio);
       resultados.push(result);
+      if (onProgress) await onProgress(i + 1, total);
     }
 
     await db.query(`

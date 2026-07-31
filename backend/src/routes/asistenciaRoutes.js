@@ -14,6 +14,7 @@ router.get('/detalle/:id', checkPermission('asistencia.ver'), AsistenciaControll
 router.put('/diario/:id/estado', checkPermission('asistencia.gestionar'), AsistenciaController.updateEstadoDiario);
 router.post('/calcular', checkPermission('asistencia.gestionar'), AsistenciaController.calcularMes);
 router.post('/calcular-todos', checkPermission('asistencia.gestionar'), AsistenciaController.calcularTodos);
+router.get('/calcular-todos/estado', checkPermission('asistencia.ver'), AsistenciaController.getEstadoJob);
 router.get('/sancion', checkPermission('asistencia.ver'), AsistenciaController.getSancionPersonal);
 router.delete('/:id', checkPermission('asistencia.gestionar'), AsistenciaController.deleteAsistencia);
 

@@ -120,16 +120,26 @@ export default function ConfiguracionPage() {
             const item = config.find(c => c.clave === clave);
             if (!item) return null;
             const isNumber = item.tipo === 'integer' || item.tipo === 'number';
+            const isJson = item.tipo === 'json';
             return (
-              <div key={clave}>
+              <div key={clave} className={isJson ? 'md:col-span-2 lg:col-span-3' : ''}>
                 <label className={labelClass}>{item.descripcion || clave}</label>
-                <input 
-                  type={isNumber ? 'number' : 'text'} 
-                  step={item.tipo === 'number' ? 'any' : '1'}
-                  value={getVal(clave)}
-                  onChange={e => handleChange(clave, e.target.value)}
-                  className={inputClass + (item.tipo === 'string' ? '' : ' font-mono')} 
-                />
+                {isJson ? (
+                  <textarea
+                    rows={3}
+                    value={getVal(clave)}
+                    onChange={e => handleChange(clave, e.target.value)}
+                    className={inputClass + " font-mono resize-y"} 
+                  />
+                ) : (
+                  <input 
+                    type={isNumber ? 'number' : 'text'} 
+                    step={item.tipo === 'number' ? 'any' : '1'}
+                    value={getVal(clave)}
+                    onChange={e => handleChange(clave, e.target.value)}
+                    className={inputClass + (item.tipo === 'string' ? '' : ' font-mono')} 
+                  />
+                )}
               </div>
             );
           })}
@@ -183,7 +193,7 @@ export default function ConfiguracionPage() {
           <ConfigGroup 
             title="Tolerancias de Asistencia" 
             icon={<Clock size={18} />}
-            keys={['tolerancia_atraso_default', 'tolerancia_falta_default', 'salida_adelantada_default', 'puntualidad_default', 'max_extra_default', 'dias_laborales_mes']}
+            keys={['tolerancia_atraso_default', 'tolerancia_falta_default', 'salida_adelantada_default', 'puntualidad_default', 'max_extra_default', 'dias_laborales_mes', 'tolerancia_atraso_por_tipo_contrato']}
           />
           <ConfigGroup 
             title="Geolocalización (Geocerca)" 

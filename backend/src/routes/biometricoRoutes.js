@@ -1,9 +1,25 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const BiometricoController = require('../controllers/biometricoController');
 const { authMiddleware, checkPermission } = require('../middleware/authMiddleware');
 
 router.use(authMiddleware);
+
+const tmpDir = path.join('/tmp', 'biometrico_uploads');
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true });
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, tmpDir),
+    filename: (req, file, cb) => cb(null, `zktimeten_${Date.now()}.db`)
+  }),
+  limits: { fileSize: 300 * 1024 * 1024 }
+});
 
 router.get('/config', checkPermission('biometrico.ver'), BiometricoController.getConfig);
 router.post('/config', checkPermission('biometrico.gestionar'), BiometricoController.updateConfig);
@@ -13,6 +29,7 @@ router.get('/raw-logs', checkPermission('biometrico.ver'), BiometricoController.
 
 router.post('/importar-empleados', checkPermission('biometrico.gestionar'), BiometricoController.importarEmpleados);
 router.post('/importar-marcaciones', checkPermission('biometrico.gestionar'), BiometricoController.importarMarcaciones);
+router.post('/importar-zktimeten', checkPermission('biometrico.gestionar'), upload.single('archivo'), BiometricoController.importarZkTimeten);
 router.get('/stats-importacion', checkPermission('biometrico.ver'), BiometricoController.getStatsImportacion);
 
 router.get('/departamentos', checkPermission('biometrico.ver'), BiometricoController.getDepartamentos);

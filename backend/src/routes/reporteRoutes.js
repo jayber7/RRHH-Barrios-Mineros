@@ -14,6 +14,7 @@ router.get('/asistencia/planilla', checkPermission('reportes.ver'), ReporteContr
 router.get('/asistencia/atrasos', checkPermission('reportes.ver'), ReporteController.getReporteAtrasos);
 router.get('/asistencia/sanciones', checkPermission('reportes.ver'), ReporteController.getReporteSanciones);
 router.post('/eventos', checkPermission('reportes.ver'), ReporteController.generarEventos);
+router.post('/asistencia/contrato', checkPermission('reportes.ver'), ReporteController.generarEventosContrato);
 router.get('/plantillas-por-departamento', checkPermission('reportes.ver'), ReporteController.getPlantillasPorDepartamento);
 
 module.exports = router;
