@@ -4,7 +4,7 @@ import {
   Link, UserCheck, AlertCircle, CheckCircle2,
   Clock, Activity, Upload, Download, Search,
   Users, UserX, ChevronRight, BarChart3,
-  FileSpreadsheet, FileDown, Calendar, Filter, X
+  FileSpreadsheet, FileDown, Calendar, Filter, X, Eye
 } from 'lucide-react';
 import api from '../config/api';
 
@@ -1057,10 +1057,15 @@ const AttendanceTab = ({ showStatus }) => {
     }
   };
 
+  const generarContrato = async (ids) => {
+    const res = await api.post('/api/reportes/asistencia/contrato', { ids, desde, hasta }, { responseType: 'blob' });
+    return res.data;
+  };
+
   const exportarPdfContrato = async (ids) => {
     try {
-      const res = await api.post('/api/reportes/asistencia/contrato', { ids, desde, hasta }, { responseType: 'blob' });
-      const url = URL.createObjectURL(res.data);
+      const blob = await generarContrato(ids);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `reporte_eventos_retrasos_faltas_${desde}_${hasta}.pdf`;
@@ -1069,6 +1074,17 @@ const AttendanceTab = ({ showStatus }) => {
       a.remove();
       URL.revokeObjectURL(url);
       showStatus('success', 'PDF generado correctamente');
+    } catch (e) {
+      showStatus('error', e.response?.data?.error || e.message);
+    }
+  };
+
+  const previsualizarContrato = async (ids) => {
+    try {
+      const blob = await generarContrato(ids);
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      if (!win) showStatus('error', 'Bloqueador de popups: permite las ventanas emergentes');
     } catch (e) {
       showStatus('error', e.response?.data?.error || e.message);
     }
@@ -1223,6 +1239,13 @@ const AttendanceTab = ({ showStatus }) => {
                     className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-700 transition-colors">
                     <FileDown size={16} />
                     Reporte por Contrato ({selectedIds.size})
+                  </button>
+                )}
+                {selectedIds.size > 0 && (
+                  <button onClick={() => previsualizarContrato([...selectedIds])}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-300 transition-colors">
+                    <Eye size={16} />
+                    Vista Previa ({selectedIds.size})
                   </button>
                 )}
               </div>

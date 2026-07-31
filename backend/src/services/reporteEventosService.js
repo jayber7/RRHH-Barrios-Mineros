@@ -94,7 +94,7 @@ class ReporteEventosService {
 
       tablas.push({
         table: {
-          widths: [73, 173, 90, 52, '*'],
+          widths: [83, 144, 96, 99, 99],
           body: [
             ...(primera
               ? [[
