@@ -44,19 +44,18 @@ class CalculoAsistenciaService {
     const diurnoOffset = await ConfiguracionService.get('ventana_busqueda_diurna_h', 6);
     const offsetHoras = nocturno ? nocturnoOffset : diurnoOffset;
     const { rows: logs } = await db.query(`
-      SELECT timestamp, verificacion_tipo FROM biometrico_logs_raw
+      SELECT timestamp, verificacion_tipo,
+             to_char(timestamp AT TIME ZONE 'America/La_Paz', 'HH24:MI') as hora
+      FROM biometrico_logs_raw
       WHERE biometrico_id::text = (SELECT biometrico_id::text FROM personal WHERE id = $1)
-        AND timestamp >= $2::date + $3::interval
-        AND timestamp < $2::date + interval '1 day' + $3::interval
+        AND timestamp >= $2::date AT TIME ZONE 'America/La_Paz' + $3::interval
+        AND timestamp < ($2::date AT TIME ZONE 'America/La_Paz') + interval '1 day' + $3::interval
       ORDER BY timestamp ASC
     `, [personalId, fecha, `${offsetHoras} hours`]);
 
     if (logs.length === 0) return { estado: 9, minutos_atraso: 0, horas_turno: 0 };
 
-    const primera = logs[0].timestamp;
-    const ultima = logs[logs.length - 1].timestamp;
-
-    const llegadaMinutos = primera.getHours() * 60 + primera.getMinutes();
+    const llegadaMinutos = this._timeToMin(logs[0].hora);
     const tolerancia = turno.tolerancia_atraso || (await ConfiguracionService.get('tolerancia_atraso_default', 5));
     let minutosAtraso = Math.max(0, llegadaMinutos - entradaMinutos - tolerancia);
 
@@ -67,7 +66,7 @@ class CalculoAsistenciaService {
 
     if (logs.length === 1) return { estado: 8, minutos_atraso: minutosAtraso, horas_turno: 0 };
 
-    let salidaRealMinutos = ultima.getHours() * 60 + ultima.getMinutes();
+    let salidaRealMinutos = this._timeToMin(logs[logs.length - 1].hora);
     if (nocturno && salidaRealMinutos < entradaMinutos) {
       salidaRealMinutos += 1440;
     }
