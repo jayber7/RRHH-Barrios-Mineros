@@ -4,9 +4,38 @@ import {
   Link, UserCheck, AlertCircle, CheckCircle2,
   Clock, Activity, Upload, Download, Search,
   Users, UserX, ChevronRight, BarChart3,
-  FileSpreadsheet, Calendar, Filter, X
+  FileSpreadsheet, FileDown, Calendar, Filter, X
 } from 'lucide-react';
 import api from '../config/api';
+
+const ETIQUETAS_ESTADO = {
+  0: 'Entrada',
+  1: 'Salida',
+  2: 'Salida Temporal',
+  3: 'Regreso',
+  4: 'Entrada Tiempo Extra',
+  5: 'Salida Tiempo Extra'
+};
+
+const etiquetaEstado = (estado) => ETIQUETAS_ESTADO[estado] ?? 'Salida';
+
+const formatoNombre = (personal) =>
+  [personal.primer_nombre, personal.apellido_paterno].filter(Boolean).join(' ').toUpperCase();
+
+const formatoFechaHoraLaPaz = (timestamp) => {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('es-BO', {
+      timeZone: 'America/La_Paz',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date(timestamp)).map((x) => [x.type, x.value])
+  );
+  return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`;
+};
 
 const TABS = [
   { id: 'config', label: 'Configuración', icon: Settings },
@@ -827,76 +856,82 @@ const AttendanceTab = ({ showStatus }) => {
   const imprimirReporte = () => {
     const lista = Array.isArray(printModal.data) ? printModal.data : [printModal.data];
     if (!lista.length) return;
-    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const secciones = lista.map((d, idx) => {
-      const filas = d.marcaciones.map((m, i) => {
-        const fecha = new Date(m.timestamp);
-        return `<tr>
-          <td class="c">${i + 1}</td>
-          <td>${fecha.toLocaleDateString()}</td>
-          <td>${dias[fecha.getDay()]}</td>
-          <td>${fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false })}</td>
-          <td><span class="tag">${m.estado_asistencia === 0 ? 'Entrada' : 'Salida'}</span></td>
-          <td>${m.origen}</td>
-        </tr>`;
-      }).join('');
-      const separator = idx > 0 ? '<div class="page-break"></div>' : '';
-      return `${separator}
-        <div class="header">
-          <h1>Hospital de Barrios Mineros</h1>
-          <p>Reporte de Marcaciones Biométricas</p>
-          <p class="sub">${d.personal.primer_nombre} ${d.personal.apellido_paterno} ${d.personal.apellido_materno || ''} (CI: ${d.personal.ci})</p>
-        </div>
-        <div class="info-grid">
-          <div><div class="label">Empleado</div><div class="value">${d.personal.primer_nombre} ${d.personal.apellido_paterno} ${d.personal.apellido_materno || ''}</div></div>
-          <div><div class="label">CI</div><div class="value">${d.personal.ci}</div></div>
-          <div><div class="label">ID Biométrico</div><div class="value">${d.personal.biometrico_id}</div></div>
-          <div><div class="label">Rango</div><div class="value">${new Date(d.resumen.desde).toLocaleDateString()} — ${new Date(d.resumen.hasta).toLocaleDateString()}</div></div>
-        </div>
-        <div class="badges">
-          <span>Entradas: ${d.resumen.entradas}</span>
-          <span>Salidas: ${d.resumen.salidas}</span>
-          <span>Total: ${d.resumen.total}</span>
-        </div>
+
+    const filasTabla = (d, conCabecera) => {
+      const cabecera = conCabecera
+        ? `<tr class="cab">
+            <th>ID</th><th>Nombre</th><th>Fecha / Hora</th><th>Estado</th><th>Tipo de Registro</th>
+          </tr>`
+        : '';
+      const filas = d.marcaciones.map((m) => `
+        <tr>
+          <td class="c">${d.personal.biometrico_id ?? ''}</td>
+          <td>${formatoNombre(d.personal)}</td>
+          <td>${formatoFechaHoraLaPaz(m.timestamp)}</td>
+          <td>Normal</td>
+          <td>${etiquetaEstado(m.estado_asistencia)}</td>
+        </tr>`).join('');
+      return `${cabecera}${filas}`;
+    };
+
+    const secciones = lista.map((d, idx) => `
+      ${idx > 0 ? '<div class="page-break"></div>' : ''}
         <table>
-          <thead><tr><th style="text-align:center">#</th><th>Fecha</th><th>Día</th><th>Hora</th><th>Tipo</th><th>Origen</th></tr></thead>
-          <tbody>${filas}</tbody>
-        </table>`;
-    }).join('');
+          <colgroup>
+            <col style="width:79.5pt"><col style="width:180pt"><col style="width:96.2pt"><col style="width:58.45pt"><col style="width:auto">
+          </colgroup>
+          ${filasTabla(d, idx === 0)}
+        </table>`).join('');
 
     const html = `<html><head>
       <meta charset="utf-8">
-      <title>Reporte de Marcaciones</title>
+      <title>Reporte de Eventos</title>
       <style>
-        @page { size: legal portrait; margin: 1.5cm 1cm 1.5cm 3cm; }
+        @page { size: A4 portrait; margin: 31mm 12mm 18mm 12mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9pt; color: #000; padding: 0; }
-        .header { text-align: center; margin-bottom: 12pt; padding-top: 0; }
-        .header h1 { font-size: 14pt; font-weight: 900; color: #000; }
-        .header p { font-size: 9pt; color: #000; margin-top: 2pt; }
-        .header .sub { font-size: 10pt; font-weight: 700; margin-top: 4pt; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4pt 16pt; margin-bottom: 8pt; padding: 6pt 0; border-bottom: 1px solid #000; }
-        .info-grid .label { font-size: 6.5pt; font-weight: 700; color: #000; text-transform: uppercase; letter-spacing: 0.5pt; }
-        .info-grid .value { font-size: 9pt; font-weight: 400; color: #000; }
-        .badges { display: flex; gap: 6pt; margin-bottom: 8pt; }
-        .badges span { padding: 2pt 8pt; border: 1px solid #000; font-size: 8pt; font-weight: 700; color: #000; }
-        table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 6pt; }
-        thead th { text-align: left; padding: 3pt 6pt; font-size: 6.5pt; font-weight: 700; color: #000; text-transform: uppercase; letter-spacing: 0.3pt; border-bottom: 1.5px solid #000; }
-        tbody td { padding: 1.5pt 6pt; border-bottom: 0.5px solid #000; color: #000; }
-        .c { color: #000; font-family: monospace; text-align: center; width: 20pt; }
-        .tag { display: inline-block; padding: 0 5pt; border: 1px solid #000; font-size: 6.5pt; font-weight: 700; text-transform: uppercase; color: #000; }
-        .footer { text-align: center; font-size: 6.5pt; color: #000; margin-top: 10pt; border-top: 1px solid #000; padding-top: 5pt; }
+        body { font-family: Arial, 'Liberation Sans', sans-serif; font-size: 9.72pt; color: #000; }
+        .titulo { text-align: center; font-size: 20pt; font-weight: 700; margin-top: 8mm; }
+        .sep { border: none; border-top: 1.56pt solid #000; margin: 3mm 0 4mm 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 0.75pt solid #000; padding: 2.4pt 4pt; }
+        thead th, tr.cab th { font-weight: 700; font-size: 9.72pt; text-align: left; }
+        tr { height: 18pt; }
+        .c { text-align: right; }
         .page-break { page-break-before: always; height: 0; }
+        .pie { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 4mm; font-size: 8.28pt; font-weight: 700; }
+        .pie .izq { font-size: 9.72pt; font-weight: 400; }
       </style>
     </head><body>
+      <h1 class="titulo">Reporte de Eventos</h1>
+      <hr class="sep">
       ${secciones}
-      <div class="footer">Generado el ${new Date().toLocaleString()} — Sistema RRHH Barrios Mineros</div>
+      <div class="pie"><span class="izq">Página: 1 / 1</span><span>Fecha / Hora: ${formatoFechaHoraLaPaz(new Date())}</span></div>
     </body></html>`;
     const win = window.open('', '_blank');
     win.document.write(html);
     win.document.close();
     win.focus();
     setTimeout(() => { win.print(); win.close(); }, 300);
+  };
+
+  const exportarPdf = async () => {
+    const lista = Array.isArray(printModal.data) ? printModal.data : [printModal.data];
+    if (!lista.length) return;
+    const ids = lista.map(d => d.personal.id);
+    try {
+      const res = await api.post('/api/reportes/eventos', { ids, desde, hasta }, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_eventos_${desde}_${hasta}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('success', 'PDF generado correctamente');
+    } catch (e) {
+      showStatus('error', e.response?.data?.error || e.message);
+    }
   };
 
   const toggleSeleccion = (id) => {
@@ -1102,20 +1137,33 @@ const AttendanceTab = ({ showStatus }) => {
       {/* Modal de previsualización de impresión */}
       {printModal.open && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:relative print:inset-auto print:block print:bg-white print:p-0">
-          <style data-print>{`
+          <style>{`
+            .reporte-titulo { font-family: Arial, 'Liberation Sans', sans-serif; font-size: 20pt; font-weight: 700; text-align: center; color: #000; margin: 0; }
+            .reporte-sep { border: none; border-top: 1.56pt solid #000; margin: 8pt 0 10pt; }
+            .reporte-tabla { width: 100%; border-collapse: collapse; font-family: Arial, 'Liberation Sans', sans-serif; font-size: 9.72pt; color: #000; }
+            .reporte-tabla td { border: 0.75pt solid #000; padding: 2.4pt 4pt; height: 18pt; }
+            .reporte-cab td { font-weight: 700; }
+            .page-break { page-break-before: always; }
+            .reporte-pie-screen { margin-top: 12pt; text-align: right; font-family: Arial, 'Liberation Sans', sans-serif; font-size: 8.28pt; font-weight: 700; color: #000; }
+            .reporte-pie-print { display: none; }
             @media print {
               .print-modal-wrap { position: relative !important; inset: auto !important; display: block !important; align-items: flex-start !important; justify-content: flex-start !important; background: white !important; padding: 0 !important; }
               .print-modal-inner { box-shadow: none !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; height: auto !important; }
               .print-modal-body { overflow: visible !important; padding: 0 !important; }
-              .print-row td { padding-top: 1px !important; padding-bottom: 1px !important; }
-              .print-badge { padding: 0 4px !important; font-size: 10px !important; }
+              .reporte-pie-screen { display: none !important; }
+              .reporte-pie-print { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; justify-content: flex-end; padding: 0 36pt 6pt; font-family: Arial, 'Liberation Sans', sans-serif; font-size: 8.28pt; font-weight: 700; color: #000; }
             }
           `}</style>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:h-auto print-modal-inner">
             {/* Header */}
             <div className="p-6 border-b border-slate-100 flex justify-between items-center print:hidden">
-              <h2 className="font-bold text-slate-800 text-lg">Previsualizar Marcaciones</h2>
+              <h2 className="font-bold text-slate-800 text-lg">Reporte de Eventos</h2>
               <div className="flex gap-2">
+                <button onClick={exportarPdf}
+                  className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                  <FileDown size={16} />
+                  Exportar PDF
+                </button>
                 <button onClick={imprimirReporte}
                   className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center gap-2">
                   <FileSpreadsheet size={16} />
@@ -1135,79 +1183,46 @@ const AttendanceTab = ({ showStatus }) => {
               ) : printModal.data ? (
                 <>
                   {/* Encabezado del reporte */}
-                  <div className="text-center mb-6">
-                    <h1 className="text-xl font-black text-slate-800">Hospital de Barrios Mineros</h1>
-                    <p className="text-slate-500 text-sm">Reporte de Marcaciones Biométricas</p>
-                    <p className="text-xs text-slate-400 mt-1">{Array.isArray(printModal.data) ? printModal.data.length : 1} empleado(s)</p>
-                  </div>
+                  <h1 className="reporte-titulo">Reporte de Eventos</h1>
+                  <hr className="reporte-sep" />
 
                   {(Array.isArray(printModal.data) ? printModal.data : [printModal.data]).map((d, idx) => (
-                    <div key={idx} className={idx > 0 ? 'mt-8 pt-6 border-t border-slate-200' : ''}>
-                      {/* Datos del empleado */}
-                      <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-slate-50 rounded-2xl">
-                        <div>
-                          <span className="text-xs font-bold text-slate-400 uppercase">Empleado</span>
-                          <p className="font-bold text-slate-800 text-sm">{d.personal.primer_nombre} {d.personal.apellido_paterno} {d.personal.apellido_materno || ''}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-slate-400 uppercase">CI</span>
-                          <p className="font-bold text-slate-800 text-sm">{d.personal.ci}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-slate-400 uppercase">ID Biométrico</span>
-                          <p className="font-bold text-slate-800 text-sm">{d.personal.biometrico_id}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-slate-400 uppercase">Rango</span>
-                          <p className="font-bold text-slate-800 text-sm">{new Date(d.resumen.desde).toLocaleDateString()} — {new Date(d.resumen.hasta).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-
-                      {/* Resumen */}
-                      <div className="flex gap-4 mb-4">
-                        <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold">Entradas: {d.resumen.entradas}</div>
-                        <div className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold">Salidas: {d.resumen.salidas}</div>
-                        <div className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">Total: {d.resumen.total}</div>
-                      </div>
-
-                      {/* Tabla de marcaciones */}
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            <th className="py-2 pr-3">#</th>
-                            <th className="py-2 pr-3">Fecha</th>
-                            <th className="py-2 pr-3">Día</th>
-                            <th className="py-2 pr-3">Hora</th>
-                            <th className="py-2 pr-3">Tipo</th>
-                            <th className="py-2">Origen</th>
-                          </tr>
-                        </thead>
+                    <div key={idx} className={idx > 0 ? 'page-break' : ''}>
+                      <table className="reporte-tabla">
+                        <colgroup>
+                          <col style={{ width: '79.5pt' }} />
+                          <col style={{ width: '180pt' }} />
+                          <col style={{ width: '96.2pt' }} />
+                          <col style={{ width: '58.45pt' }} />
+                          <col style={{ width: 'auto' }} />
+                        </colgroup>
                         <tbody>
-                          {d.marcaciones.map((m, i) => {
-                            const fecha = new Date(m.timestamp);
-                            const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-                            return (
-                              <tr key={i} className="border-b border-slate-100">
-                                <td className="py-1.5 pr-3 text-slate-400 font-mono">{i + 1}</td>
-                                <td className="py-1.5 pr-3 font-medium text-slate-700">{fecha.toLocaleDateString()}</td>
-                                <td className="py-1.5 pr-3 text-slate-500">{dias[fecha.getDay()]}</td>
-                                <td className="py-1.5 pr-3 font-mono text-slate-600">{fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false })}</td>
-                                <td className="py-1.5 pr-3">
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase border border-slate-300">{m.estado_asistencia === 0 ? 'Entrada' : 'Salida'}</span>
-                                </td>
-                                <td className="py-1.5 text-slate-500">{m.origen}</td>
-                              </tr>
-                            );
-                          })}
+                          {idx === 0 && (
+                            <tr className="reporte-cab">
+                              <td>ID</td>
+                              <td>Nombre</td>
+                              <td>Fecha / Hora</td>
+                              <td>Estado</td>
+                              <td>Tipo de Registro</td>
+                            </tr>
+                          )}
+                          {d.marcaciones.map((m, i) => (
+                            <tr key={i}>
+                              <td className="reporte-id">{d.personal.biometrico_id ?? ''}</td>
+                              <td>{formatoNombre(d.personal)}</td>
+                              <td>{formatoFechaHoraLaPaz(m.timestamp)}</td>
+                              <td>Normal</td>
+                              <td>{etiquetaEstado(m.estado_asistencia)}</td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   ))}
 
                   {/* Pie */}
-                  <div className="mt-6 text-center text-xs text-slate-400">
-                    Generado el {new Date().toLocaleString()} — Sistema RRHH Barrios Mineros
-                  </div>
+                  <div className="reporte-pie-screen">Fecha / Hora: {formatoFechaHoraLaPaz(new Date())}</div>
+                  <div className="reporte-pie-print">Fecha / Hora: {formatoFechaHoraLaPaz(new Date())}</div>
                 </>
               ) : null}
             </div>

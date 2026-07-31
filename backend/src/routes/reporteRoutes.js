@@ -13,6 +13,7 @@ router.get('/asistencia/mensual', checkPermission('reportes.ver'), ReporteContro
 router.get('/asistencia/planilla', checkPermission('reportes.ver'), ReporteController.getPlanillaConsolidada);
 router.get('/asistencia/atrasos', checkPermission('reportes.ver'), ReporteController.getReporteAtrasos);
 router.get('/asistencia/sanciones', checkPermission('reportes.ver'), ReporteController.getReporteSanciones);
+router.post('/eventos', checkPermission('reportes.ver'), ReporteController.generarEventos);
 router.get('/plantillas-por-departamento', checkPermission('reportes.ver'), ReporteController.getPlantillasPorDepartamento);
 
 module.exports = router;

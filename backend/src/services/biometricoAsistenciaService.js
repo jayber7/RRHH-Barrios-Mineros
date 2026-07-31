@@ -98,7 +98,8 @@ class BiometricoAsistenciaService {
         p.apellido_materno
       FROM biometrico_logs_raw l
       INNER JOIN personal p ON p.biometrico_id = l.biometrico_id
-      WHERE l.timestamp::DATE >= $1 AND l.timestamp::DATE <= $2
+      WHERE (l.timestamp AT TIME ZONE 'America/La_Paz')::DATE >= $1
+        AND (l.timestamp AT TIME ZONE 'America/La_Paz')::DATE <= $2
       ORDER BY p.apellido_paterno
     `, [desde, hasta]);
 
@@ -117,8 +118,8 @@ class BiometricoAsistenciaService {
       FROM biometrico_logs_raw l
       INNER JOIN personal p ON p.biometrico_id = l.biometrico_id
       WHERE p.id = $1
-        AND l.timestamp::DATE >= $2
-        AND l.timestamp::DATE <= $3
+        AND (l.timestamp AT TIME ZONE 'America/La_Paz')::DATE >= $2
+        AND (l.timestamp AT TIME ZONE 'America/La_Paz')::DATE <= $3
       ORDER BY l.timestamp ASC
     `, [personalId, desde, hasta]);
 
