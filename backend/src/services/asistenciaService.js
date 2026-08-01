@@ -14,7 +14,6 @@ class AsistenciaService {
 
       // 1. Detectar tipo de planilla y fila de encabezados
       let headerRowIndex = -1;
-      let tipoPlanilla = sheetName.toUpperCase().includes('RESIDENTE') ? 'RESIDENTE' : 'MINISTERIAL';
 
       for (let i = 0; i < Math.min(data.length, 20); i++) {
         const row = data[i];
@@ -52,6 +51,16 @@ class AsistenciaService {
           }
 
           const personalId = personal[0].id;
+
+          // Determinar tipo de contrato desde vinculos_laborales (reemplaza concepto planilla)
+          const { rows: vl } = await db.query(`
+            SELECT COALESCE(tp.nombre_tipo, 'SIN DEFINIR') as tipo
+            FROM vinculos_laborales vl
+            LEFT JOIN cat_tipos_personal tp ON tp.id = vl.tipo_personal_id
+            WHERE vl.personal_id = $1
+            LIMIT 1
+          `, [personalId]);
+          const tipoPlanilla = vl.length > 0 ? vl[0].tipo : 'SIN DEFINIR';
 
           // Extraer totales
           const totalHoras = parseFloat(row['HORAS TRABAJADAS'] || row['TOTAL HRS. MES'] || 0);

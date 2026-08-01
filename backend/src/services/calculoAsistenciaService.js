@@ -102,14 +102,14 @@ class CalculoAsistenciaService {
     amId = am.rows.length > 0 ? am.rows[0].id : null;
 
     if (!amId) {
-      let tipo = 'MINISTERIAL';
       const { rows: vl } = await db.query(`
-        SELECT unidad_servicio FROM vinculos_laborales WHERE personal_id = $1 LIMIT 1
+        SELECT COALESCE(tp.nombre_tipo, 'SIN DEFINIR') as tipo
+        FROM vinculos_laborales vl
+        LEFT JOIN cat_tipos_personal tp ON tp.id = vl.tipo_personal_id
+        WHERE vl.personal_id = $1
+        LIMIT 1
       `, [personalId]);
-      if (vl.length > 0 && vl[0].unidad_servicio &&
-          vl[0].unidad_servicio.toUpperCase().includes('RESIDENTE')) {
-        tipo = 'RESIDENTE';
-      }
+      const tipo = vl.length > 0 ? vl[0].tipo : 'SIN DEFINIR';
       const ins = await db.query(`
         INSERT INTO asistencia_mensual (personal_id, mes, anio, total_horas, total_atrasos_min, tipo_planilla)
         VALUES ($1, $2, $3, 0, 0, $4) RETURNING id

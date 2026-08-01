@@ -168,14 +168,16 @@ const AsistenciasPage = () => {
             </div>
 
             <div className="w-44 space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Tipo Planilla</label>
+              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Tipo Contrato</label>
               <select 
                 value={filters.tipo}
                 onChange={(e) => setFilters({...filters, tipo: e.target.value})}
                 className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               >
                 <option value="">Todos</option>
-                <option value="MINISTERIAL">Ministerial</option>
+                <option value="ÍTEM">Ítem</option>
+                <option value="CONTRATO">Contrato</option>
+                <option value="CONSULTORÍA">Consultoría</option>
                 <option value="RESIDENTE">Residente</option>
               </select>
             </div>
@@ -194,7 +196,7 @@ const AsistenciasPage = () => {
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Personal</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Planilla</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Tipo Contrato</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Horas Mes</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase text-center">Atrasos (min)</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Observaciones</th>
@@ -238,8 +240,9 @@ const AsistenciasPage = () => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                          item.tipo_planilla === 'RESIDENTE' 
-                          ? 'bg-purple-50 text-purple-600' 
+                          item.tipo_planilla === 'RESIDENTE' ? 'bg-purple-50 text-purple-600'
+                          : item.tipo_planilla === 'CONTRATO' ? 'bg-blue-50 text-blue-600'
+                          : item.tipo_planilla === 'CONSULTORÍA' ? 'bg-amber-50 text-amber-600'
                           : 'bg-emerald-50 text-emerald-600'
                         }`}>
                           {item.tipo_planilla}

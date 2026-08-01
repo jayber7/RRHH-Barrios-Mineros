@@ -124,7 +124,7 @@ class ReporteAsistenciaService {
       { header: 'CARGO', key: 'cargo', width: 22 },
       { header: 'ITEM', key: 'item', width: 14 },
       { header: 'FUENTE', key: 'fuente', width: 14 },
-      { header: 'PLANILLA', key: 'planilla', width: 12 },
+      { header: 'TIPO', key: 'planilla', width: 14 },
       { header: 'TOTAL HORAS', key: 'total_horas', width: 12 },
       { header: 'TOTAL ATRASOS', key: 'total_atrasos', width: 14 },
     ];

@@ -229,12 +229,14 @@ const ReportesPage = () => {
 
                 {currentReport.filters.includes('tipo_planilla') && (
                   <div className="w-64">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tipo Planilla</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Tipo Contrato</label>
                     <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       value={filters.tipo_planilla}
                       onChange={e => setFilters({...filters, tipo_planilla: e.target.value})}>
                       <option value="">Todas</option>
-                      <option value="MINISTERIAL">Ministerial</option>
+                      <option value="ÍTEM">Ítem</option>
+                      <option value="CONTRATO">Contrato</option>
+                      <option value="CONSULTORÍA">Consultoría</option>
                       <option value="RESIDENTE">Residente</option>
                     </select>
                   </div>
