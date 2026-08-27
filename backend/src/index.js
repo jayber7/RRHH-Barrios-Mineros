@@ -23,6 +23,7 @@ const configuracionRoutes = require('./routes/configuracionRoutes');
 const comunicadosRoutes = require('./routes/comunicadosRoutes');
 const selfServiceRoutes = require('./routes/selfServiceRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const turnosGridRoutes = require('./routes/turnosGridRoutes');
 const { startEstadoJob } = require('./cron/estadoJob');
 const { startCalculoDiarioJob } = require('./cron/calculoDiarioJob');
 
@@ -55,6 +56,7 @@ app.use('/api/configuracion', configuracionRoutes);
 app.use('/api/comunicados', comunicadosRoutes);
 app.use('/api/self-service', selfServiceRoutes);
 app.use('/api/roles', roleRoutes);
+app.use('/api/turnos-grid', turnosGridRoutes);
 
 app.get('/', (req, res) => {
   res.send('API RRHH Hospital Barrios Mineros funcionando');

@@ -17,6 +17,7 @@ import BandejaPage from './pages/BandejaPage';
 import ConfiguracionPage from './pages/ConfiguracionPage';
 import ComunicadosPage from './pages/ComunicadosPage';
 import TurnosPage from './pages/TurnosPage';
+import TurnosGridPage from './pages/TurnosGridPage';
 import VacacionesPage from './pages/VacacionesPage';
 import PermisosPage from './pages/PermisosPage';
 import CertificadosPage from './pages/CertificadosPage';
@@ -130,6 +131,7 @@ function AppContent() {
           <Route path="/biometrico" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><BiometricoPage /></ProtectedRoute>} />
           <Route path="/self-service" element={<SelfServicePage />} />
           <Route path="/turnos" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><TurnosPage /></ProtectedRoute>} />
+          <Route path="/turnos-grid" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH', 'JEFE_SERVICIO']}><TurnosGridPage /></ProtectedRoute>} />
           <Route path="/vacaciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><VacacionesPage /></ProtectedRoute>} />
           <Route path="/permisos" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><PermisosPage /></ProtectedRoute>} />
           <Route path="/certificaciones" element={<ProtectedRoute roles={['ADMIN', 'JEFE_RRHH']}><CertificadosPage /></ProtectedRoute>} />

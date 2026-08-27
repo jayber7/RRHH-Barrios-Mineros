@@ -4,7 +4,7 @@ import {
   Users, Calendar, Clock, Plane, FileBadge, 
   MessageSquare, RefreshCw, LayoutDashboard, Cpu,
   FileSpreadsheet, FileText, Inbox, Settings, LogOut, AlertTriangle,
-  Bell, CheckCheck, User, Shield
+  Bell, CheckCheck, User, Shield, Grid
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL, authFetch } from '../config/api';
@@ -83,6 +83,7 @@ const Sidebar = () => {
     { name: 'Asistencias', icon: <Clock size={20} />, path: '/asistencias', permission: 'asistencia.ver' },
     { name: 'Biométrico', icon: <Cpu size={20} />, path: '/biometrico', permission: 'biometrico.ver' },
     { name: 'Turnos', icon: <Calendar size={20} />, path: '/turnos', permission: 'turnos.ver' },
+    { name: 'Turnos Grid', icon: <Grid size={20} />, path: '/turnos-grid', permission: 'turnos-grid.ver' },
     { name: 'Vacaciones', icon: <Plane size={20} />, path: '/vacaciones', permission: 'vacaciones.ver' },
     { name: 'Permisos', icon: <FileBadge size={20} />, path: '/permisos', permission: 'permisos.ver' },
     { name: 'Certificaciones', icon: <FileBadge size={20} />, path: '/certificaciones', permission: 'certificados.ver' },
