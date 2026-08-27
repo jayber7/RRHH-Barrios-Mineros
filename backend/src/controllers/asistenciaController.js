@@ -169,11 +169,49 @@ class AsistenciaController {
       const { mes, anio } = req.body;
       if (!mes || !anio) return res.status(400).json({ error: 'Mes y año requeridos' });
 
-      const resultado = await CalculoAsistenciaService.procesarTodos(mes, anio);
-      res.json(resultado);
+      const { rows } = await db.query(`
+        INSERT INTO asistencia_jobs (mes, anio, estado) VALUES ($1, $2, 'pendiente')
+        RETURNING id
+      `, [parseInt(mes), parseInt(anio)]);
+      const jobId = rows[0].id;
+
+      setImmediate(async () => {
+        try {
+          await db.query(`UPDATE asistencia_jobs SET estado = 'ejecutando', updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [jobId]);
+          await CalculoAsistenciaService.procesarTodos(parseInt(mes), parseInt(anio), async (procesados, total) => {
+            await db.query(`
+              UPDATE asistencia_jobs SET procesados = $1, total = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3
+            `, [procesados, total, jobId]);
+          });
+          await db.query(`UPDATE asistencia_jobs SET estado = 'completado', procesados = total, updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [jobId]);
+        } catch (error) {
+          console.error('Error en job de cálculo:', error);
+          await db.query(`
+            UPDATE asistencia_jobs SET estado = 'error', detalle = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2
+          `, [error.message, jobId]);
+        }
+      });
+
+      res.status(202).json({ jobId, estado: 'pendiente' });
     } catch (error) {
-      console.error('Error al calcular todos:', error);
-      res.status(500).json({ error: 'Error al procesar cálculo masivo' });
+      console.error('Error al iniciar cálculo masivo:', error);
+      res.status(500).json({ error: 'Error al iniciar cálculo masivo' });
+    }
+  }
+
+  static async getEstadoJob(req, res) {
+    try {
+      const { job_id } = req.query;
+      if (!job_id) return res.status(400).json({ error: 'job_id requerido' });
+
+      const { rows } = await db.query(`
+        SELECT id, mes, anio, estado, procesados, total, detalle, updated_at FROM asistencia_jobs WHERE id = $1
+      `, [parseInt(job_id)]);
+      if (!rows[0]) return res.status(404).json({ error: 'Job no encontrado' });
+      res.json(rows[0]);
+    } catch (error) {
+      console.error('Error al obtener estado del job:', error);
+      res.status(500).json({ error: 'Error al obtener estado del job' });
     }
   }
 

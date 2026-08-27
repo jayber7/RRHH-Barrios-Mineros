@@ -232,7 +232,7 @@ export default function SelfServicePage() {
               </div>
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                 <Shield size={16} className="text-slate-400 flex-shrink-0" />
-                <span className="text-slate-600">{personal.tipo_planilla || 'Sin planilla'}</span>
+                <span className="text-slate-600">{personal.tipo_planilla || 'Sin tipo'}</span>
               </div>
               {personal.turno_codigo && (
                 <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">

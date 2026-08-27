@@ -1,6 +1,7 @@
 const ReporteService = require('../services/reporteService');
 const ReporteAsistenciaService = require('../services/reporteAsistenciaService');
 const ReporteEventosService = require('../services/reporteEventosService');
+const ReporteContratoService = require('../services/reporteContratoService');
 const db = require('../config/db');
 
 const getInventarioPersonal = async (req, res) => {
@@ -122,6 +123,23 @@ const generarEventos = async (req, res) => {
   }
 };
 
+const generarEventosContrato = async (req, res) => {
+  try {
+    const { ids, desde, hasta } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Se requiere la lista de empleados (ids)' });
+    }
+    if (!desde || !hasta) return res.status(400).json({ error: 'desde y hasta requeridos' });
+
+    const buffer = await ReporteContratoService.generarPDF({ ids, desde, hasta });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=reporte_eventos_retrasos_faltas_${desde}_${hasta}.pdf`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getPlantillasPorDepartamento = async (req, res) => {
   try {
     const { rows } = await db.query(`
@@ -152,5 +170,6 @@ module.exports = {
   getReporteAtrasos,
   getReporteSanciones,
   generarEventos,
+  generarEventosContrato,
   getPlantillasPorDepartamento
 };

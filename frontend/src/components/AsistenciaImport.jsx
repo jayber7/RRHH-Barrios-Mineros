@@ -65,7 +65,7 @@ const AsistenciaImport = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800">Importación de Asistencia</h1>
-        <p className="text-slate-500">Cargue los consolidados mensuales de asistencia (Ministeriales y Residentes)</p>
+        <p className="text-slate-500">Cargue los consolidados mensuales de asistencia</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -171,7 +171,7 @@ const AsistenciaImport = () => {
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5"></div>
-              El sistema detectará automáticamente si la hoja corresponde a personal Ministerial o Residentes.
+              El tipo de contrato de cada empleado se obtendrá automáticamente de sus datos de personal.
             </li>
             <li className="flex items-start gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5"></div>
