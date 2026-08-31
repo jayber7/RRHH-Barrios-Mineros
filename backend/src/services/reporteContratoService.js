@@ -121,17 +121,15 @@ class ReporteContratoService {
       if (!data) continue;
 
       const body = [];
-      if (primera) {
-        body.push([
-          { text: 'Fecha', style: 'celda', bold: true },
-          { text: 'Entrada', style: 'celda', bold: true },
-          { text: 'Salida', style: 'celda', bold: true },
-          { text: 'Marca Ent.', style: 'celda', bold: true },
-          { text: 'Marca Sal.', style: 'celda', bold: true },
-          { text: 'Atraso (min)', style: 'celda', bold: true },
-          { text: 'Estado', style: 'celda', bold: true },
-        ]);
-      }
+      body.push([
+        { text: 'Fecha', style: 'celda', bold: true },
+        { text: 'Entrada', style: 'celda', bold: true },
+        { text: 'Salida', style: 'celda', bold: true },
+        { text: 'Marca Ent.', style: 'celda', bold: true },
+        { text: 'Marca Sal.', style: 'celda', bold: true },
+        { text: 'Atraso (min)', style: 'celda', bold: true },
+        { text: 'Estado', style: 'celda', bold: true },
+      ]);
 
       for (const f of data.filas) {
         body.push([
@@ -153,9 +151,11 @@ class ReporteContratoService {
 
       tablas.push({
         table: {
-          widths: [64, 50, 50, 54, 54, 62, '*'],
+          // anchos de contenido = anchos legado ZKTime [71,57,57,60,61,69,148] menos ~10pt (padding 3.5+5.5 + borde)
+          widths: [61, 47, 47, 50, 51, 59, 138],
+          headerRows: 4,
           body: [
-            [{ text: `${data.personal.ci} ${data.personal.complemento || ''}  ${nombreCompleto(data.personal)}  ·  ${data.personal.biometrico_id ?? ''}`, colSpan: 7, style: 'nombre' }, {}, {}, {}, {}, {}, {}],
+            [{ text: `${data.personal.ci} ${nombreCompleto(data.personal).replace(/ /g, '')} ${data.personal.ci} · ${data.personal.biometrico_id ?? data.personal.ci}`, colSpan: 7, style: 'nombre' }, {}, {}, {}, {}, {}, {}],
             [{ text: `Tipo de Contrato: ${data.tipoContrato}   |   Tolerancia: ${data.tolerancia} min`, colSpan: 7, style: 'celda' }, {}, {}, {}, {}, {}, {}],
             [{ text: `Días con atraso: ${data.diasAtraso}   |   Faltas: ${data.faltas}`, colSpan: 7, style: 'celda' }, {}, {}, {}, {}, {}, {}],
             ...body,
@@ -164,8 +164,8 @@ class ReporteContratoService {
         layout: {
           hLineWidth: () => 0.75, vLineWidth: () => 0.75,
           hLineColor: () => '#000000', vLineColor: () => '#000000',
-          paddingLeft: () => 3, paddingRight: () => 3,
-          paddingTop: () => 3.2, paddingBottom: () => 3.2
+          paddingLeft: () => 3.5, paddingRight: () => 5.5,
+          paddingTop: () => 3.19, paddingBottom: () => 3.19
         },
         pageBreak: primera ? undefined : 'before',
       });
@@ -183,11 +183,12 @@ class ReporteContratoService {
         margin: [0, 46.2, 0, 0],
         stack: [
           { text: 'Reporte de Eventos Retrasos y faltas por Contrato', style: 'titulo', alignment: 'center' },
-          { canvas: [{ type: 'line', x1: 36, y1: 0, x2: anchoPagina - 36, y2: 0, lineWidth: 1.56, lineColor: '#000000' }], margin: [0, 11.3, 0, 0] }
+          { canvas: [{ type: 'line', x1: 36, y1: 0, x2: anchoPagina - 36, y2: 0, lineWidth: 1.56, lineColor: '#000000' }], margin: [0, 13.7, 0, 0] }
         ]
       },
       content: tablas,
       footer: (currentPage, pageCount) => ({
+        margin: [0, 0, 0, 26], // legado: pie al borde de página (x=0), baseline ~14mm desde abajo
         columns: [
           { text: `Página: ${currentPage} / ${pageCount}`, style: 'pieIzquierdo' },
           { text: `Fecha / Hora: ${formatFechaHora(new Date())}`, style: 'pieDerecho' }

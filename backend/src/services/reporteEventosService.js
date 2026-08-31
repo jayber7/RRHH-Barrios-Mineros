@@ -1,34 +1,5 @@
-const path = require('path');
-const fs = require('fs');
-const pdfMake = require('pdfmake');
-const vfs = require('pdfmake/build/vfs_fonts');
+const pdfMake = require('./pdfMakeSetup');
 const BiometricoAsistenciaService = require('./biometricoAsistenciaService');
-
-pdfMake.setUrlAccessPolicy(() => false);
-pdfMake.setLocalAccessPolicy(() => false);
-
-for (const [name, content] of Object.entries(vfs)) {
-  pdfMake.virtualfs.writeFileSync(name, Buffer.from(content, 'base64'));
-}
-
-const FONT_DIR = path.join(__dirname, '..', '..', 'assets', 'fonts');
-pdfMake.virtualfs.writeFileSync(
-  'LiberationSans-Regular.ttf',
-  fs.readFileSync(path.join(FONT_DIR, 'LiberationSans-Regular.ttf'))
-);
-pdfMake.virtualfs.writeFileSync(
-  'LiberationSans-Bold.ttf',
-  fs.readFileSync(path.join(FONT_DIR, 'LiberationSans-Bold.ttf'))
-);
-
-pdfMake.setFonts({
-  LiberationSans: {
-    normal: 'LiberationSans-Regular.ttf',
-    bold: 'LiberationSans-Bold.ttf',
-    italics: 'LiberationSans-Regular.ttf',
-    bolditalics: 'LiberationSans-Bold.ttf'
-  }
-});
 
 const fechaHoraFormatter = new Intl.DateTimeFormat('es-BO', {
   timeZone: 'America/La_Paz',
@@ -87,14 +58,15 @@ class ReporteEventosService {
           { text: String(r.personal.biometrico_id ?? ''), style: 'celda' },
           { text: formatNombre(r.personal), style: 'celda' },
           { text: formatFechaHora(m.timestamp), style: 'celda' },
-          { text: 'Normal', style: 'celda' },
-          { text: etiquetaEstado(m.estado_asistencia), style: 'celda' }
+          { text: etiquetaEstado(m.estado_asistencia), style: 'celda' },
+          { text: 'Normal', style: 'celda' }
         ]);
       }
 
       tablas.push({
         table: {
-          widths: [83, 144, 96, 99, 99],
+          // anchos afinados contra columnas legado (ID,Nombre,Fecha,Estado,Tipo)
+          widths: [76.1, 137, 89.5, 92.8, 94],
           body: [
             ...(primera
               ? [[
@@ -109,14 +81,12 @@ class ReporteEventosService {
           ]
         },
         layout: {
-          hLineWidth: () => 0.75,
-          vLineWidth: () => 0.75,
-          hLineColor: () => '#000000',
-          vLineColor: () => '#000000',
-          paddingLeft: () => 3,
+          hLineWidth: () => 0.75, vLineWidth: () => 0.75,
+          hLineColor: () => '#000000', vLineColor: () => '#000000',
+          paddingLeft: () => 2.4,
           paddingRight: () => 3,
-          paddingTop: () => 3.2,
-          paddingBottom: () => 3.2
+          paddingTop: () => 2.74,
+          paddingBottom: () => 2.74
         },
         pageBreak: primera ? undefined : 'before'
       });
@@ -129,7 +99,7 @@ class ReporteEventosService {
     const docDefinition = {
       pageSize: 'A4',
       pageMargins: [36, 85.5, 36, 50],
-      defaultStyle: { font: 'LiberationSans' },
+      defaultStyle: { font: 'Tahoma' },
       header: {
         margin: [0, 46.2, 0, 0],
         stack: [
@@ -150,22 +120,23 @@ class ReporteEventosService {
                 lineColor: '#000000'
               }
             ],
-            margin: [0, 11.3, 0, 0]
+            margin: [0, 10, 0, 0]
           }
         ]
       },
       content: tablas,
       footer: (currentPage, pageCount) => ({
+        margin: [36, 1, 36, 1.5],
         columns: [
-          { text: `Página: ${currentPage} / ${pageCount}`, style: 'pieIzquierdo' },
-          { text: `Fecha / Hora: ${formatFechaHora(new Date())}`, style: 'pieDerecho' }
+          { text: `Fecha / Hora:${formatFechaHora(new Date())}`, style: 'pieIzquierdo' }, // legado: izq y sin espacio tras ':'
+          { text: `Página: ${currentPage} / ${pageCount}`, style: 'pieDerecho' }
         ]
       }),
       styles: {
         titulo: { fontSize: 20, bold: true, color: '#000000' },
-        cabecera: { fontSize: 9.72, bold: true, color: '#000000' },
-        celda: { fontSize: 9.72, color: '#000000' },
-        pieIzquierdo: { fontSize: 9.72, alignment: 'left', margin: [0, 1, 0, 0] },
+        cabecera: { fontSize: 9.8, bold: true, color: '#000000' },
+        celda: { fontSize: 9.8, color: '#000000' },
+        pieIzquierdo: { fontSize: 9.8, alignment: 'left', margin: [0, 1, 0, 0] },
         pieDerecho: { fontSize: 8.28, bold: true, alignment: 'right', margin: [0, 1, 0, 0] }
       }
     };

@@ -11,14 +11,9 @@ for (const [name, content] of Object.entries(vfs)) {
 }
 
 const FONT_DIR = path.join(__dirname, '..', '..', 'assets', 'fonts');
-pdfMake.virtualfs.writeFileSync(
-  'LiberationSans-Regular.ttf',
-  fs.readFileSync(path.join(FONT_DIR, 'LiberationSans-Regular.ttf'))
-);
-pdfMake.virtualfs.writeFileSync(
-  'LiberationSans-Bold.ttf',
-  fs.readFileSync(path.join(FONT_DIR, 'LiberationSans-Bold.ttf'))
-);
+for (const f of ['LiberationSans-Regular.ttf', 'LiberationSans-Bold.ttf', 'tahoma.ttf', 'tahomabold.ttf']) {
+  pdfMake.virtualfs.writeFileSync(f, fs.readFileSync(path.join(FONT_DIR, f)));
+}
 
 pdfMake.setFonts({
   LiberationSans: {
@@ -26,6 +21,12 @@ pdfMake.setFonts({
     bold: 'LiberationSans-Bold.ttf',
     italics: 'LiberationSans-Regular.ttf',
     bolditalics: 'LiberationSans-Bold.ttf'
+  },
+  Tahoma: {
+    normal: 'tahoma.ttf',
+    bold: 'tahomabold.ttf',
+    italics: 'tahoma.ttf',
+    bolditalics: 'tahomabold.ttf'
   }
 });
 
