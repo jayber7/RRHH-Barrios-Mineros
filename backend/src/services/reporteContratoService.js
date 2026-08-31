@@ -154,6 +154,7 @@ class ReporteContratoService {
           // anchos de contenido = anchos legado ZKTime [71,57,57,60,61,69,148] menos ~10pt (padding 3.5+5.5 + borde)
           widths: [61, 47, 47, 50, 51, 59, 138],
           headerRows: 4,
+          dontBreakRows: true,
           body: [
             [{ text: `${data.personal.ci} ${nombreCompleto(data.personal).replace(/ /g, '')} ${data.personal.ci} · ${data.personal.biometrico_id ?? data.personal.ci}`, colSpan: 7, style: 'nombre' }, {}, {}, {}, {}, {}, {}],
             [{ text: `Tipo de Contrato: ${data.tipoContrato}   |   Tolerancia: ${data.tolerancia} min`, colSpan: 7, style: 'celda' }, {}, {}, {}, {}, {}, {}],

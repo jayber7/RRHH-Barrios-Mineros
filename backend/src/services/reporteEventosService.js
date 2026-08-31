@@ -67,6 +67,7 @@ class ReporteEventosService {
         table: {
           // anchos afinados contra columnas legado (ID,Nombre,Fecha,Estado,Tipo)
           widths: [76.1, 137, 89.5, 92.8, 94],
+          dontBreakRows: true,
           body: [
             ...(primera
               ? [[
